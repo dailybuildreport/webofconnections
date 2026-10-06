@@ -1,0 +1,1254 @@
+<title>Карта логики Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500;1,600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: широкая рабочая поверхность для большого экрана — шапка, общая карта с панелью узла справа, затем разделы «сверху вниз». Цвета и шрифты — из визуального языка Flow (тёмная тема первична). */
+:root{
+  --bg:#0A0F1A; --surface:#111927; --surface-2:#172235; --region:#0E1522; --line:#2C3A50; --line-2:#1E2A3C;
+  --ink:#F2F5FA; --ink-2:#A4B1C5; --ink-3:#6F7D93; --accent:#4A92FF;
+  --e-data:#4A92FF; --e-action:#E9AE3A; --e-auto:#25B489; --e-appr:#B48CFF; --e-calc:#4FC6DE; --e-doc:#F08A5C; --e-mgmt:#F2F5FA; --e-miss:#F0605C;
+  --good:#25B489; --warn:#E9AE3A; --crit:#F0605C;
+  --f-ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --f-disp:'Playfair Display',Georgia,'Times New Roman',serif;
+  --f-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#F3F5F9; --surface:#FFFFFF; --surface-2:#EDF1F7; --region:#F8FAFD; --line:#CDD6E3; --line-2:#E1E7F0;
+  --ink:#0E1626; --ink-2:#46546B; --ink-3:#7A879C; --accent:#2F6FE0;
+  --e-data:#2F6FE0; --e-action:#B17A08; --e-auto:#10855C; --e-appr:#7A4FD8; --e-calc:#0C88A6; --e-doc:#C4511F; --e-mgmt:#18233A; --e-miss:#D2302C;
+  --good:#10855C; --warn:#B17A08; --crit:#D2302C; color-scheme:light } }
+:root[data-theme="light"]{
+  --bg:#F3F5F9; --surface:#FFFFFF; --surface-2:#EDF1F7; --region:#F8FAFD; --line:#CDD6E3; --line-2:#E1E7F0;
+  --ink:#0E1626; --ink-2:#46546B; --ink-3:#7A879C; --accent:#2F6FE0;
+  --e-data:#2F6FE0; --e-action:#B17A08; --e-auto:#10855C; --e-appr:#7A4FD8; --e-calc:#0C88A6; --e-doc:#C4511F; --e-mgmt:#18233A; --e-miss:#D2302C;
+  --good:#10855C; --warn:#B17A08; --crit:#D2302C; color-scheme:light }
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0; background:var(--bg); color:var(--ink); font:14.5px/1.5 var(--f-ui); -webkit-font-smoothing:antialiased}
+.wrap{max-width:1880px; margin:0 auto; padding-inline:clamp(16px,2.4vw,40px); padding-block:28px 80px}
+h1,h2,h3{margin:0; text-wrap:balance; letter-spacing:-.01em}
+em.d{font-family:var(--f-disp); font-style:italic; font-weight:500; letter-spacing:0}
+p{margin:0}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.eyebrow{font:600 11.5px/1.2 var(--f-ui); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3)}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
+
+/* шапка */
+.top{display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:28px 48px; align-items:end; padding-bottom:22px; border-bottom:1px solid var(--line)}
+.top h1{font-size:clamp(30px,3.6vw,52px); line-height:1.05; font-weight:700; margin-top:10px}
+.top .lede{margin-top:14px; color:var(--ink-2); max-width:70ch; font-size:15.5px}
+.stats{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.stats div{background:var(--surface); padding:14px 16px}
+.stats b{display:block; font:600 26px/1.1 var(--f-ui); font-variant-numeric:tabular-nums}
+.stats span{font-size:12px; color:var(--ink-2)}
+nav.toc{position:sticky; top:env(safe-area-inset-top,0px); z-index:20; background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--line-2); margin-inline:calc(-1 * clamp(16px,2.4vw,40px)); padding:10px clamp(16px,2.4vw,40px); display:flex; gap:6px; overflow-x:auto; scrollbar-width:none}
+nav.toc a{flex:none; color:var(--ink-2); text-decoration:none; font-size:13px; padding:6px 11px; border-radius:999px; border:1px solid transparent; white-space:nowrap}
+nav.toc a:hover{color:var(--ink); border-color:var(--line)}
+nav.toc a b{font-family:var(--f-mono); font-weight:600; color:var(--ink-3); margin-right:6px; font-size:11.5px}
+
+section.s{padding-top:56px}
+.sh{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px 32px; margin-bottom:18px}
+.sh h2{font-size:clamp(22px,2.2vw,30px); font-weight:700; margin-top:6px}
+.sh p{color:var(--ink-2); max-width:78ch; margin-top:8px}
+
+/* легенда и фильтры */
+.legend{display:flex; flex-wrap:wrap; gap:6px}
+.lg{display:inline-flex; align-items:center; gap:8px; padding:6px 11px 6px 9px; border:1px solid var(--line); border-radius:999px; background:var(--surface); font-size:12.5px; cursor:pointer; user-select:none}
+.lg[aria-pressed="false"]{opacity:.42}
+.lg svg{flex:none}
+.lg .n{font-family:var(--f-mono); font-size:11px; color:var(--ink-3)}
+.tools{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+.btn{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); cursor:pointer; font-size:12.5px; color:var(--ink-2)}
+.btn:hover{color:var(--ink); border-color:var(--ink-3)}
+.btn[aria-pressed="true"]{color:var(--ink); border-color:var(--accent); background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+.nodekinds{display:flex; flex-wrap:wrap; gap:14px 20px; font-size:12.5px; color:var(--ink-2); margin-top:10px}
+.nodekinds span{display:inline-flex; align-items:center; gap:7px}
+.tag{display:inline-block; font:600 9.5px/1 var(--f-mono); letter-spacing:.06em; padding:3px 5px 2px; border-radius:4px; border:1px solid currentColor; text-transform:uppercase; white-space:nowrap}
+
+/* общая карта */
+.mapgrid{display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:16px; align-items:start; margin-top:14px}
+.mapbox{border:1px solid var(--line); border-radius:14px; background:var(--surface); overflow:auto; position:relative}
+#web{display:block; width:100%; min-width:1180px; height:auto}
+.panel{border:1px solid var(--line); border-radius:14px; background:var(--surface); padding:18px 18px 20px; position:sticky; top:62px; max-height:calc(100vh - 80px); overflow:auto}
+.panel h3{font-size:19px; margin-top:6px}
+.panel .tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px}
+.panel dl{margin:14px 0 0; display:grid; gap:10px}
+.panel dt{font:600 11px/1.2 var(--f-ui); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3)}
+.panel dd{margin:3px 0 0; font-size:13.5px; color:var(--ink)}
+.plist{list-style:none; margin:6px 0 0; padding:0; display:grid; gap:5px}
+.plist li{display:grid; grid-template-columns:12px minmax(0,1fr); gap:8px; font-size:13px; line-height:1.4}
+.plist li i{width:10px; height:3px; border-radius:2px; margin-top:8px}
+.plist button{background:none; border:0; padding:0; cursor:pointer; color:var(--ink); font-weight:600; text-align:left; text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+.plist button:hover{text-decoration-color:var(--ink-2)}
+.plist .lb{color:var(--ink-2)}
+.gapmini{border-top:1px solid var(--line-2); padding-top:8px; margin-top:4px; font-size:13px}
+.hint{font-size:12.5px; color:var(--ink-3); margin-top:10px}
+
+/* SVG карты */
+.rg rect{fill:var(--region); stroke:var(--line-2)}
+.rg text{fill:var(--ink-3); font:600 11px var(--f-ui); letter-spacing:.12em; text-transform:uppercase}
+.rg text.rt{font:italic 500 17px var(--f-disp); letter-spacing:0; text-transform:none; fill:var(--ink-2)}
+.spoke{stroke:var(--line); stroke-width:1.2; stroke-dasharray:2 5; fill:none}
+.e{fill:none; stroke-width:1.6; opacity:.62; transition:opacity .15s}
+.e.t-data{stroke:var(--e-data)}
+.e.t-action{stroke:var(--e-action); stroke-width:2.4}
+.e.t-auto{stroke:var(--e-auto); stroke-dasharray:10 5}
+.e.t-appr{stroke:var(--e-appr); stroke-width:2; stroke-dasharray:12 4 2 4}
+.e.t-calc{stroke:var(--e-calc); stroke-width:2.1; stroke-dasharray:.1 5; stroke-linecap:round}
+.e.t-doc{stroke:var(--e-doc); stroke-dasharray:5 3}
+.e.t-mgmt{stroke:var(--e-mgmt); stroke-width:2.6; opacity:.4}
+.e.t-miss{stroke:var(--e-miss); stroke-width:1.5; stroke-dasharray:3 4; opacity:.75}
+.mk-data{fill:var(--e-data)} .mk-action{fill:var(--e-action)} .mk-auto{fill:var(--e-auto)} .mk-appr{fill:var(--e-appr)} .mk-calc{fill:var(--e-calc)} .mk-doc{fill:var(--e-doc)} .mk-mgmt{fill:var(--e-mgmt)} .mk-miss{fill:none; stroke:var(--e-miss); stroke-width:1.4}
+.nd{cursor:pointer}
+.nd rect.b{fill:var(--surface-2); stroke:var(--ink-3); stroke-width:1.2}
+.nd.k-calc rect.b{stroke:var(--e-calc); stroke-dasharray:4 3}
+.nd.k-result rect.b{fill:color-mix(in srgb,var(--e-mgmt) 9%,var(--surface)); stroke:var(--e-mgmt); stroke-width:1.6}
+.nd.k-config rect.b{stroke:var(--ink-3); stroke-dasharray:1.5 3}
+.nd.k-hub rect.b{fill:var(--accent); stroke:none}
+.nd text.t{fill:var(--ink); font:600 13px var(--f-ui)}
+.nd.k-hub text.t{fill:#fff; font-size:17px; font-weight:700; letter-spacing:.04em}
+.nd.k-hub text.tg{fill:#fff; font-size:11px; opacity:.85}
+.nd text.tg{font:600 9.5px var(--f-mono); letter-spacing:.06em}
+.nd .gd{fill:var(--e-miss)}
+.nd .gdt{fill:#fff; font:700 10px var(--f-ui)}
+.nd:hover rect.b, .nd:focus-visible rect.b{stroke:var(--accent); stroke-width:2}
+.nd:focus{outline:none}
+.elab{pointer-events:none}
+.elab rect{fill:var(--surface); stroke:var(--line); stroke-width:1}
+.elab text{fill:var(--ink); font:500 11.5px var(--f-ui)}
+svg.focus .e{opacity:.06}
+svg.focus .e.on{opacity:1}
+svg.focus .e.t-mgmt.on{opacity:.9}
+svg.focus .nd{opacity:.28}
+svg.focus .nd.on{opacity:1}
+svg.focus .nd.sel rect.b{stroke:var(--accent); stroke-width:2.6}
+svg.focus .spoke{opacity:.3}
+
+/* конструкция */
+.tree{display:grid; grid-template-columns:repeat(auto-fill,minmax(232px,1fr)); gap:12px}
+.tc{border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:14px 16px 16px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.tc h3{font-size:15.5px}
+.tc .route{font-family:var(--f-mono); font-size:11.5px; color:var(--ink-3)}
+.tc p{font-size:13px; color:var(--ink-2)}
+.chips{display:flex; flex-wrap:wrap; gap:5px}
+.chip{font-size:12px; padding:3px 8px; border-radius:6px; background:var(--surface-2); color:var(--ink-2)}
+.chip.go{cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--ink)}
+.chip.go:hover{border-color:var(--accent)}
+.stores{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:16px}
+.store{border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--surface); min-width:0}
+.store h3{font-size:15.5px; display:flex; gap:8px; align-items:baseline; flex-wrap:wrap}
+.store ul{margin:10px 0 0; padding-left:18px; font-size:13px; color:var(--ink-2); display:grid; gap:3px}
+.store .reset{margin-top:12px; font-size:12.5px; border-top:1px dashed var(--line); padding-top:10px; color:var(--ink)}
+
+/* дорожки сценариев */
+.flowcard{border:1px solid var(--line); border-radius:14px; background:var(--surface); margin-top:16px}
+.flowcard > header{padding:16px 18px 6px; display:flex; flex-wrap:wrap; gap:6px 24px; justify-content:space-between; align-items:baseline}
+.flowcard > header h3{font-size:18px}
+.flowcard > header p{font-size:13px; color:var(--ink-2); max-width:90ch}
+.flowcard .foot{padding:4px 18px 16px; font-size:13px; color:var(--ink-2); display:grid; gap:4px}
+.flowcard .foot b{color:var(--ink)}
+.fscroll{overflow-x:auto; padding:22px 0 18px}
+.flow{position:relative; display:grid; margin:0 14px; min-width:min-content}
+.flow .lane{grid-column:1 / -1; border-top:1px solid var(--line-2); z-index:0}
+.flow .lane.alt{background:color-mix(in srgb,var(--surface-2) 45%,transparent)}
+.flow .ll{grid-column:1; z-index:2; padding:12px 12px 12px 4px; font:600 12px/1.3 var(--f-ui); color:var(--ink-2); align-self:center}
+.flow .grp{z-index:2; font:600 11px/1.2 var(--f-ui); letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); padding:6px 10px; border-bottom:2px solid var(--line); margin:0 8px; align-self:end}
+.fn{z-index:3; margin:18px 10px; padding:9px 11px 10px; border:1px solid var(--ink-3); border-radius:9px; background:var(--surface); font-size:12.8px; line-height:1.38; align-self:center; position:relative}
+.fn .k{display:block; font:600 9.5px/1 var(--f-mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px}
+.fn small{display:block; color:var(--ink-2); font-size:11.8px; margin-top:4px}
+.fn.k-action{border-color:var(--e-action)} .fn.k-action .k{color:var(--e-action)}
+.fn.k-auto{border-color:var(--e-auto)} .fn.k-auto .k{color:var(--e-auto)}
+.fn.k-calc{border-color:var(--e-calc); border-style:dashed} .fn.k-calc .k{color:var(--e-calc)}
+.fn.k-appr{border-color:var(--e-appr)} .fn.k-appr .k{color:var(--e-appr)}
+.fn.k-doc{border-color:var(--e-doc)} .fn.k-doc .k{color:var(--e-doc)}
+.fn.k-mgmt{border-color:var(--e-mgmt); background:color-mix(in srgb,var(--e-mgmt) 7%,var(--surface))} .fn.k-mgmt .k{color:var(--e-mgmt)}
+.fn.k-data{border-color:var(--e-data)} .fn.k-data .k{color:var(--e-data)}
+.fn.k-miss{border-color:var(--e-miss); border-style:dashed; background:color-mix(in srgb,var(--e-miss) 6%,var(--surface)); color:var(--ink-2)} .fn.k-miss .k{color:var(--e-miss)}
+.fn.k-stop{border-color:var(--ink-3); border-width:1px 4px 1px 1px; color:var(--ink-2)} .fn.k-stop .k{color:var(--ink-3)}
+.fn.k-state{border-color:var(--e-appr); border-radius:999px; text-align:center; padding:8px 12px; font-weight:600}
+.fn.k-state small{font-weight:400}
+.fn.k-state.miss{border-color:var(--e-miss); border-style:dashed; color:var(--ink-2)}
+.fn.k-state.auto{border-color:var(--e-auto); border-style:dashed}
+.fn.k-state.end{border-color:var(--ink-3)}
+svg.fl{position:absolute; left:0; top:0; pointer-events:none; z-index:2; overflow:visible}
+svg.fl.fl-top{z-index:4}
+svg.fl path{fill:none}
+svg.fl .lt{font:500 11px var(--f-ui); fill:var(--ink-2)}
+svg.fl .lr{fill:var(--surface)}
+
+/* роли */
+.two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; margin-top:16px}
+.box{border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:16px 18px; min-width:0}
+.box h3{font-size:15.5px; margin-bottom:10px}
+.tw{overflow-x:auto}
+table.t{border-collapse:collapse; width:100%; font-size:13px}
+table.t th, table.t td{padding:8px 10px; border-bottom:1px solid var(--line-2); text-align:left; vertical-align:top}
+table.t th{font:600 11px/1.3 var(--f-ui); letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); background:var(--surface); position:sticky; top:0}
+table.t td.c{text-align:center}
+.yes{color:var(--good); font-weight:700}
+.no{color:var(--ink-3)}
+.note{border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line)); background:color-mix(in srgb,var(--warn) 7%,var(--surface)); border-radius:12px; padding:14px 16px; font-size:13.5px; margin-top:16px}
+.note b{color:var(--ink)}
+
+/* матрица */
+.mx-tools{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px}
+.mxwrap{border:1px solid var(--line); border-radius:12px; background:var(--surface); overflow:auto; max-height:78vh}
+table.mx{min-width:1200px}
+table.mx td:first-child{font-weight:600; min-width:150px}
+table.mx td .ty{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:6px; vertical-align:1px}
+.need{display:inline-block; font-size:12px; padding:2px 7px; border-radius:6px; white-space:nowrap}
+.need.y{background:color-mix(in srgb,var(--e-action) 18%,transparent); color:var(--ink)}
+.need.n{background:var(--surface-2); color:var(--ink-2)}
+
+/* разрывы */
+.gapcols{columns:4 360px; column-gap:14px}
+.gapcols .gc{break-inside:avoid; margin-bottom:14px; display:block}
+.gc{border:1px solid var(--line); border-radius:14px; background:var(--surface); padding:16px 18px 18px; min-width:0}
+.gc > header{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.gc h3{font-size:16.5px}
+.gc > p{font-size:13px; color:var(--ink-2); margin-top:4px}
+.gc ol{margin:12px 0 0; padding:0; list-style:none; display:grid; gap:10px; counter-reset:g}
+.gc li{counter-increment:g; display:grid; grid-template-columns:24px minmax(0,1fr); gap:8px; font-size:13.4px}
+.gc li::before{content:counter(g); font:600 11px/20px var(--f-mono); text-align:center; height:20px; border-radius:6px; background:var(--surface-2); color:var(--ink-2)}
+.gc li b{display:block; color:var(--ink)}
+.gc li span{color:var(--ink-2)}
+.gc li .where{display:flex; flex-wrap:wrap; gap:4px; margin-top:5px}
+.dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px}
+.g-closed{--gcol:var(--good)} .g-broken{--gcol:var(--crit)} .g-dup{--gcol:var(--warn)} .g-iso{--gcol:var(--ink-3)} .g-miss{--gcol:var(--e-miss)} .g-unclear{--gcol:var(--e-appr)} .g-manual{--gcol:var(--e-action)}
+.gc h3 .dot{background:var(--gcol)}
+.gc .cnt{font:600 12px var(--f-mono); color:var(--gcol)}
+
+/* вопросы */
+.qs{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; counter-reset:q}
+.qs li{counter-increment:q; border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:16px 18px; display:grid; grid-template-columns:38px minmax(0,1fr); gap:12px; font-size:15px; line-height:1.45}
+.qs li::before{content:counter(q); font:italic 600 26px/1 var(--f-disp); color:var(--accent)}
+.qs li small{display:block; color:var(--ink-2); font-size:12.5px; margin-top:6px}
+footer.f{margin-top:56px; padding-top:18px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px; display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between}
+
+@media (max-width:1400px){ .mapgrid{grid-template-columns:minmax(0,1fr)} .panel{position:static; max-height:none} }
+@media (max-width:1000px){ .top{grid-template-columns:minmax(0,1fr)} .stores,.two,.qs{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:560px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} .gapcols{columns:1} .gc li{font-size:13px} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Flow — Цифровой штаб строительства · DEMO</div>
+      <h1>Карта логики <em class="d">системы</em></h1>
+      <p class="lede">Разбор того, что реализовано в демо-версии сейчас: откуда берутся данные, кто их вносит, что система считает сама, где нужны согласования и где процессы обрываются. Всё, чего в системе нет, показано отдельно и помечено как «возможная недостающая связь».</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <nav class="toc" aria-label="Разделы карты">
+    <a href="#map"><b>1</b>Общая карта</a>
+    <a href="#structure"><b>2</b>Конструкция и хранение</a>
+    <a href="#flows"><b>3</b>Сценарии</a>
+    <a href="#roles"><b>4</b>Участники и роли</a>
+    <a href="#cycles"><b>5</b>Жизненные циклы</a>
+    <a href="#matrix"><b>6</b>Матрица связей</a>
+    <a href="#gaps"><b>7</b>Логические разрывы</a>
+    <a href="#questions"><b>8</b>Вопросы владельца продукта</a>
+  </nav>
+
+  <section class="s" id="map">
+    <div class="sh">
+      <div>
+        <div class="eyebrow">1 · Вид сверху</div>
+        <h2>Общая карта: строительный проект и его контуры</h2>
+        <p>Узлы — сущности и расчёты системы, сгруппированные по контурам. Стрелки — направление движения информации. Нажмите на узел: останутся только его связи с подписями, а рядом появится описание узла. Типы связей включаются и выключаются в легенде.</p>
+      </div>
+      <div class="tools">
+        <button class="btn" type="button" id="b-miss" aria-pressed="false">Только недостающие связи</button>
+        <button class="btn" type="button" id="b-labels" aria-pressed="false">Подписи всех связей</button>
+        <button class="btn" type="button" id="b-reset">Сбросить</button>
+      </div>
+    </div>
+    <div class="legend" id="legend" role="group" aria-label="Типы связей"></div>
+    <div class="nodekinds">
+      <span><svg width="26" height="14"><rect x="1" y="1" width="24" height="12" rx="3" fill="var(--surface-2)" stroke="var(--ink-3)"/></svg>вводится вручную</span>
+      <span><svg width="26" height="14"><rect x="1" y="1" width="24" height="12" rx="3" fill="var(--surface-2)" stroke="var(--e-calc)" stroke-dasharray="4 3"/></svg>рассчитывается системой</span>
+      <span><svg width="26" height="14"><rect x="1" y="1" width="24" height="12" rx="3" fill="var(--surface-2)" stroke="var(--ink-3)" stroke-dasharray="1.5 3"/></svg>настройка</span>
+      <span><svg width="26" height="14"><rect x="1" y="1" width="24" height="12" rx="3" fill="color-mix(in srgb,var(--e-mgmt) 9%,var(--surface))" stroke="var(--e-mgmt)" stroke-width="1.6"/></svg>управленческий результат</span>
+      <span><svg width="16" height="16"><circle cx="8" cy="8" r="7" fill="var(--e-miss)"/><text x="8" y="11.5" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Inter,Arial">3</text></svg>число найденных разрывов по узлу</span>
+      <span><span class="tag" style="color:var(--e-action)">ввод</span><span class="tag" style="color:var(--e-calc)">расчёт</span><span class="tag" style="color:var(--e-auto)">авто</span><span class="tag" style="color:var(--e-appr)">согл.</span><span class="tag" style="color:var(--e-doc)">файл</span><span class="tag" style="color:var(--e-mgmt)">итог</span> — что происходит в узле</span>
+    </div>
+    <div class="mapgrid">
+      <div class="mapbox"><svg id="web" viewBox="0 0 1800 992" role="img" aria-label="Карта связей системы Flow"></svg></div>
+      <aside class="panel" id="panel" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section class="s" id="structure">
+    <div class="sh"><div>
+      <div class="eyebrow">2 · Иерархия</div>
+      <h2>Конструкция: экраны, из которых состоит система</h2>
+      <p>Уровень ниже общей карты: каждый раздел объекта, его экраны и сущности. Кнопки с названиями узлов открывают узел на общей карте.</p>
+    </div></div>
+    <div class="tree" id="tree"></div>
+    <div class="sh" style="margin-top:34px"><div>
+      <div class="eyebrow">Где живут данные</div>
+      <h2>Три хранилища одного объекта</h2>
+      <p>Это важно для понимания сброса и восстановления: разные данные одного объекта лежат в разных местах и сбрасываются разными кнопками.</p>
+    </div></div>
+    <div class="stores" id="stores"></div>
+  </section>
+
+  <section class="s" id="flows">
+    <div class="sh"><div>
+      <div class="eyebrow">3 · Последовательно</div>
+      <h2>Пользовательские сценарии</h2>
+      <p>Каждая дорожка — участник или система. Цвет рамки показывает тип шага, красная пунктирная рамка — шаг, которого в системе нет, рамка с толстым правым краем — место, где процесс обрывается.</p>
+    </div></div>
+    <div id="flowlist"></div>
+  </section>
+
+  <section class="s" id="roles">
+    <div class="sh"><div>
+      <div class="eyebrow">4 · Кто и что делает</div>
+      <h2>Взаимодействие участников</h2>
+      <p>В системе два разных понятия: <b>участник объекта</b> (организация с ролью: Заказчик, ТЗ, Подрядчик…) и <b>роль доступа</b> пользователя (Администратор, Руководитель проекта, Инженер, Наблюдатель). Ниже показано, как они проявляются в процессах.</p>
+    </div></div>
+    <div id="rolesflow"></div>
+    <div class="note"><b>Как действие одного участника отражается у другого.</b> Все участники работают с одной общей моделью объекта: заявка подрядчика сразу видна на экране ТЗ, просроченное поручение сразу появляется у руководителя в «Требует внимания». Уведомлений, личных очередей «ждёт моего действия» и привязки пользователя к организации нет. Кнопки «Подрядчик: направить» и «Технический заказчик: согласовать» доступны одной и той же роли доступа, в истории записывается метка участника, а не конкретный пользователь.</div>
+    <div class="two">
+      <div class="box"><h3>Роли доступа и права</h3><div class="tw"><table class="t" id="permtab"></table></div></div>
+      <div class="box"><h3>Где используется роль участника объекта</h3><div class="tw"><table class="t" id="partytab"></table></div></div>
+    </div>
+  </section>
+
+  <section class="s" id="cycles">
+    <div class="sh"><div>
+      <div class="eyebrow">5 · Статусы</div>
+      <h2>Жизненные циклы и переходы статусов</h2>
+      <p>Только реализованные статусы и переходы. Подписи на стрелках — кто или что вызывает переход.</p>
+    </div></div>
+    <div id="cyclelist"></div>
+  </section>
+
+  <section class="s" id="matrix">
+    <div class="sh"><div>
+      <div class="eyebrow">6 · Таблица</div>
+      <h2>Матрица связей</h2>
+      <p>Заполнена по фактической реализации. В DEMO данные объекта видят все роли; в колонке «Кто видит» указано, где результат появляется и кому он адресован.</p>
+    </div></div>
+    <div class="mx-tools" id="mxf" role="group" aria-label="Фильтр по контуру"></div>
+    <div class="mxwrap"><table class="t mx" id="mx"></table></div>
+  </section>
+
+  <section class="s" id="gaps">
+    <div class="sh"><div>
+      <div class="eyebrow">7 · Взгляд архитектора</div>
+      <h2>Логические разрывы</h2>
+      <p>Что найдено при построении карты. Здесь ничего не исправлено: это материал для решения, что корректировать.</p>
+    </div></div>
+    <div class="gapcols" id="gaplist"></div>
+  </section>
+
+  <section class="s" id="questions">
+    <div class="sh"><div>
+      <div class="eyebrow">8 · Для решения</div>
+      <h2>Что я бы проверил как владелец продукта</h2>
+      <p>Десять вопросов, которые возникли после построения карты. Каждый — выбор, который меняет связи в системе.</p>
+    </div></div>
+    <ol class="qs" id="qlist"></ol>
+  </section>
+
+  <footer class="f">
+    <span>Flow — Цифровой штаб строительства · карта логики DEMO-версии</span>
+    <span>Построено по исходному коду DEMO на 06.10.2026 · отчётная дата данных 05.10.2026</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ===================== ТИПЫ СВЯЗЕЙ ===================== */
+const TYPES = {
+  data:   { n:'Данные', d:'Данные передаются из одной сущности в другую' },
+  action: { n:'Действие пользователя', d:'Человек делает что-то вручную, и это создаёт запись в другом месте' },
+  auto:   { n:'Автоматическая реакция', d:'Система создаёт или меняет запись без дополнительного ввода' },
+  appr:   { n:'Согласование', d:'Нужен шаг другого участника' },
+  calc:   { n:'Расчёт', d:'Новый показатель получается из существующих данных' },
+  doc:    { n:'Документ', d:'Здесь возникает или используется файл / документ' },
+  mgmt:   { n:'Управленческий результат', d:'Данные превращаются в информацию для руководителя' },
+  miss:   { n:'Возможная недостающая связь', d:'Связи в системе нет; показана как вопрос' }
+};
+const TCOL = t => 'var(--e-' + t + ')';
+const DASH = { data:'', action:'', auto:'10 5', appr:'12 4 2 4', calc:'.1 5', doc:'5 3', mgmt:'', miss:'3 4' };
+const WID = { data:1.6, action:2.4, auto:1.6, appr:2, calc:2.1, doc:1.6, mgmt:2.6, miss:1.5 };
+const TAGC = { 'ввод':'action', 'расчёт':'calc', 'авто':'auto', 'согл.':'appr', 'файл':'doc', 'итог':'mgmt', 'настр.':'' };
+
+/* ===================== УЗЛЫ ОБЩЕЙ КАРТЫ ===================== */
+const REGIONS = [
+  { id:'res',  x:230,  y:6,   w:1340, h:128, t:'Управленческий результат', s:'для руководителя' },
+  { id:'cfg',  x:40,   y:172, w:262,  h:390, t:'Настройка объекта', s:'кто и как' },
+  { id:'plan', x:384,  y:172, w:672,  h:252, t:'План и выполнение', s:'график' },
+  { id:'fin',  x:1086, y:172, w:674,  h:252, t:'Деньги', s:'бюджет и расчёты' },
+  { id:'day',  x:40,   y:664, w:262,  h:318, t:'Данные с площадки', s:'периодические' },
+  { id:'mng',  x:384,  y:664, w:672,  h:318, t:'Управление', s:'события и решения' },
+  { id:'docs', x:1086, y:664, w:674,  h:318, t:'Документы', s:'файлы и статусы' }
+];
+const N = [
+  { id:'hub', x:900, y:552, w:300, h:78, t:'СТРОИТЕЛЬНЫЙ ПРОЕКТ', k:'hub', tags:['описание объекта → единая модель'],
+    what:'Описание объекта: паспорт, даты, статус, участники, включённые разделы. Из описания и журнала действий система при каждом показе собирает единую модель, которую читают все экраны.',
+    who:'Создаёт Администратор через мастер. Меняют роли с правом «Изменение настроек объекта».',
+    where:'Портфель → карточка объекта; Настройки объекта → Основное.',
+    store:'Описание объекта (реестр), журнал действий, файлы.' },
+  /* результат */
+  { id:'r_port', x:420, y:88, t:'Портфель объектов', k:'result', tags:['итог','расчёт'],
+    what:'Все объекты: суммарный бюджет и освоение, средневзвешенная по бюджету готовность, площадь, численность на площадках, число объектов с отставанием, высокие риски; сроки портфеля и таблица сравнения.',
+    who:'Только расчёт.', where:'Главная страница.', store:'Не хранится, считается при показе.' },
+  { id:'r_over', x:720, y:88, t:'Обзор объекта', k:'result', tags:['итог','расчёт'],
+    what:'Паспорт, четыре показателя (готовность, срок, бюджет, ресурсы), мини-Гант по этапам, «Требует внимания» (первые 6), последние фото. Каждый показатель ведёт в свой раздел.',
+    who:'Только расчёт.', where:'Объект → Обзор.', store:'Не хранится.' },
+  { id:'r_att', x:1020, y:88, t:'Требует внимания', k:'result', tags:['итог','авто'],
+    what:'Собирается автоматически: просроченные и критические поручения; вехи, прогноз которых позже директивного срока; до двух работ критического пути со сдвигом больше 3 дней; превышение бюджета или использование резерва больше 50 %.',
+    who:'Только расчёт.', where:'Обзор объекта (панель), бейджи меню.', store:'Не хранится.' },
+  { id:'r_chk', x:1340, y:88, t:'Проверка данных', k:'result', tags:['авто','расчёт'],
+    what:'Все ошибки и предупреждения модели: даты, связи, договоры, КС-2, документы, фото, ресурсы. При сохранении настроек новые ошибки блокируют изменение.',
+    who:'Только расчёт.', where:'Меню → «Проверка данных»; Настройки → Проверка данных.', store:'Не хранится.' },
+  /* настройка */
+  { id:'c_set', x:171, y:250, t:'Мастер и\nНастройки объекта', k:'config', tags:['настр.','ввод'],
+    what:'12 шагов мастера и те же вкладки в настройках: основное, участники, разделы, график, готовность, бюджет, документы, ресурсы, показатели, риски, фото. Каждое сохранение проходит пробную сборку модели.',
+    who:'Мастер — только Администратор. Вкладки — по правам «Настройки», «График», «Бюджет».', where:'«Добавить объект», Объект → Настройки объекта.', store:'Описание объекта. У демо-объектов — редактируемая копия с возможностью сброса.' },
+  { id:'c_party', x:171, y:340, t:'Участники\nи организации', k:'config', tags:['настр.','ввод'],
+    what:'Общий справочник организаций и участники объекта с ролями: Заказчик, ТЗ, ГП, Подрядчик, Проектировщик, Поставщик, Стройконтроль. Отдельным списком — команда проекта (ФИО, телефоны), на экранах объекта она не показывается.',
+    who:'Настройки → Участники; Администрирование → Организации.', where:'Паспорт, письма, приёмка, документы, ресурсы.', store:'Справочник — общий для всех объектов; участники — в описании объекта.' },
+  { id:'c_roles', x:171, y:430, t:'Роли доступа', k:'config', tags:['настр.'],
+    what:'Четыре роли: Администратор, Руководитель проекта, Инженер, Наблюдатель; восемь прав. Роль переключается в меню, без входа в систему. Кнопки без права скрываются, действия проверяются повторно.',
+    who:'Пользователь сам выбирает роль (DEMO).', where:'Меню → роль; Администрирование → Роли.', store:'В браузере.' },
+  { id:'c_rd', x:171, y:520, t:'Правила готовности', k:'config', tags:['настр.'],
+    what:'Режим расчёта общей готовности: по стоимости работ, по весам этапов и работ, вручную. Вес этапа распределяется между его работами. Без настройки готовность не рассчитывается.',
+    who:'Права «Настройки».', where:'Настройки → Готовность.', store:'Описание объекта.' },
+  /* план */
+  { id:'p_stage', x:500, y:250, t:'Этапы', tags:['ввод'],
+    what:'Группы работ с весом этапа. Процент и статус этапа рассчитываются по работам. Архивирование этапа архивирует все его работы.',
+    who:'Права «График».', where:'Настройки → График; Гант.', store:'Описание объекта.' },
+  { id:'p_task', x:720, y:250, t:'Работы графика', tags:['ввод'],
+    what:'Плановые даты, связи FS/SS/FF с лагом, объём и единица, стоимость, статья бюджета, договор, вес и участие в готовности. Работу можно скрыть (только с Ганта) или архивировать.',
+    who:'Права «График».', where:'Гант, карточка работы, Настройки → График.', store:'Описание объекта.' },
+  { id:'p_ms', x:940, y:250, t:'Вехи и\nдирективные сроки', tags:['ввод'],
+    what:'Вехи с директивным сроком, ключевые и одна финальная, которая задаёт прогноз ввода объекта.',
+    who:'Права «График».', where:'Гант, календарь, обзор.', store:'Описание объекта.' },
+  { id:'p_fact', x:500, y:370, t:'Факт выполнения', tags:['ввод'],
+    what:'Фактическое начало, объём или процент, окончание, комментарий. Вводится кнопкой «Внести факт» или в форме работы. Хранится только текущее значение, без истории по датам. Подтверждения факта нет.',
+    who:'Права «Внесение данных».', where:'Гант, карточка работы.', store:'Описание объекта (поля работы).' },
+  { id:'p_cpm', x:720, y:370, t:'Расчёт графика', k:'calc', tags:['расчёт'],
+    what:'Прямой и обратный проход по связям: прогнозные даты, резерв, критический путь, сдвиг к плану, статусы работ (Отставание, Просрочено, Не начато в срок). Добавляет дни реализующихся рисков.',
+    who:'Только расчёт.', where:'Гант, карточка работы, обзор, календарь.', store:'Не хранится.' },
+  { id:'p_ready', x:940, y:370, t:'Готовность объекта', k:'calc', tags:['расчёт'],
+    what:'Готовность факт и план на отчётную дату, кривые план/факт/прогноз по месяцам. Прошлый факт на кривой — интерполяция от начала работы до отчётной даты, потому что история факта не хранится.',
+    who:'Только расчёт.', where:'Обзор, Гант (динамика готовности), портфель.', store:'Не хранится.' },
+  /* деньги */
+  { id:'f_item', x:1196, y:250, t:'Статьи бюджета\nи резерв', tags:['ввод'],
+    what:'Статьи (лимит, корректировка, режим «линейно», участие в готовности) и резерв. Утверждённый бюджет = сумма статей + резерв.',
+    who:'Права «Бюджет».', where:'Бюджет, Настройки → Бюджет.', store:'Описание объекта.' },
+  { id:'f_ct', x:1424, y:250, t:'Договоры и\nдоп. соглашения', tags:['ввод'],
+    what:'Номер, подрядчик, предмет, статья, сумма, аванс, удержание. Доп. соглашения меняют цену, история сохраняется. Работы привязываются к договору в форме работы.',
+    who:'Права «Бюджет».', where:'Бюджет → договор; Документы → Договоры.', store:'Описание объекта.' },
+  { id:'f_pay', x:1652, y:250, t:'Оплаты', tags:['ввод'],
+    what:'Платежи по договору: дата, сумма, вид (аванс, за акт, прочее), документ. Только у объектов с вводом финансов. С конкретной КС-2 не связаны.',
+    who:'Права «Бюджет».', where:'Бюджет → договор.', store:'Описание объекта.' },
+  { id:'f_eac', x:1196, y:370, t:'Прогноз стоимости\nи освоение', k:'calc', tags:['расчёт'],
+    what:'Законтрактовано, незаконтрактовано, прогноз стоимости, резерв, статус бюджета, освоение по месяцам (план, факт, прогноз).',
+    who:'Только расчёт.', where:'Бюджет, обзор, портфель.', store:'Не хранится.' },
+  { id:'f_ks', x:1424, y:370, t:'КС-2', tags:['ввод','согл.'],
+    what:'Двухэтапный процесс: заявка подрядчика → проверка ТЗ → приёмка через событие календаря → КС-2 по принятому объёму → согласование → расчётный период. У объектов с вводом финансов есть второй путь: «Внести КС-2» сразу со статусом.',
+    who:'Права «Внесение данных» (заявка и переходы), «Бюджет» (ручной ввод акта).', where:'Бюджет → договор → КС-2; Документы → КС.', store:'Заявки и переходы — журнал действий; введённые акты — описание объекта.' },
+  { id:'f_done', x:1652, y:370, t:'Выполнено и\nне предъявлено', k:'calc', tags:['расчёт'],
+    what:'Выполнено по договору = сумма договора × доля выполнения его работ по графику. «Не предъявлено» = выполнено − предъявлено. Отсюда объём новой заявки КС-2.',
+    who:'Только расчёт.', where:'Карточка договора, бюджет.', store:'Не хранится.' },
+  /* площадка */
+  { id:'d_res', x:171, y:752, t:'Ресурсы', tags:['ввод'],
+    what:'По неделям: рабочие (план и факт), ИТР, численность по подрядчикам, техника по видам. Подрядчики и техника хранятся только для последней недели.',
+    who:'Права «Внесение данных».', where:'Ресурсы, обзор, Гант (панель), портфель.', store:'Описание объекта.' },
+  { id:'d_met', x:171, y:844, t:'Производственные\nпоказатели', tags:['ввод','файл'],
+    what:'Свои показатели объекта (м³ бетона, т арматуры…), период, план, итог; журнал значений по датам с вложениями. Привязка к работе и этапу — только подпись.',
+    who:'Настройки (состав), «Внесение данных» (значения).', where:'Раздел «Показатели».', store:'Описание объекта; файлы — в хранилище файлов.' },
+  { id:'d_photo', x:171, y:936, t:'Фотохроника', tags:['ввод','файл'],
+    what:'Фото с датой, этапом, работой, категорией, автором. Дата не может быть раньше начала работы.',
+    who:'Права «Внесение данных».', where:'Фотохроника, обзор, карточка работы, риски.', store:'Описание объекта + файлы.' },
+  /* управление */
+  { id:'m_risk', x:500, y:752, t:'Риски и\nпроблемные вопросы', tags:['ввод'],
+    what:'Вероятность × влияние (матрица 5×5), статус, владелец, меры, влияние на работу (дни) и на статью (стоимость), документы, фото, комментарии.',
+    who:'Права «Внесение данных».', where:'Риски; бейдж меню; портфель.', store:'Описание объекта.' },
+  { id:'m_dec', x:500, y:880, t:'Управленческие\nрешения', tags:[],
+    what:'Список решений на странице рисков. Только из исходных данных, в интерфейсе не создаются и не редактируются.',
+    who:'—', where:'Риски → «Управленческие решения».', store:'Исходные данные.' },
+  { id:'m_ord', x:720, y:752, t:'Поручения', tags:['ввод','авто'],
+    what:'Текст, ответственный (текстом), срок, приоритет, протокол, работы, документы. «Просрочено» — автоматически по сроку. История действий.',
+    who:'Права «Внесение данных».', where:'Поручения; календарь; обзор.', store:'Журнал действий (у демо-объектов часть — исходные данные).' },
+  { id:'m_prot', x:720, y:880, t:'Протоколы\nсовещаний', tags:[],
+    what:'Протоколы с поручениями и ссылкой на совещание. Только из исходных данных: создать протокол в интерфейсе нельзя.',
+    who:'—', where:'Документы → Протоколы; поручения.', store:'Исходные данные.' },
+  { id:'m_cal', x:940, y:752, t:'Календарь', tags:['авто','ввод'],
+    what:'Системные события (начало и окончание работ, вехи, выдача РД, освидетельствования по АОСР/АООК, сроки поручений) и события пользователя (совещания, приёмки, поставки…), повторяющиеся серии.',
+    who:'Системные — автоматически; свои — «Внесение данных».', where:'Календарь: месяц, неделя, повестка; карточка работы.', store:'Свои события — журнал действий.' },
+  { id:'m_let', x:940, y:880, t:'Письма', tags:['ввод'],
+    what:'Входящие и исходящие письма из исходных данных и черновики, подготовленные из событий. Статус черновика дальше не меняется, отправки нет.',
+    who:'Права «Внесение данных».', where:'Документы → Письма; карточка события.', store:'Журнал действий.' },
+  /* документы */
+  { id:'doc_rdpd', x:1196, y:752, t:'РД / ПД', tags:['файл','согл.'],
+    what:'Документы по разделам: редакции с файлами, статусы, история, передача в производство (только РД). Связь с работами.',
+    who:'Права «Документы».', where:'Документы → РД/ПД; карточка работы.', store:'Журнал действий; файлы — в хранилище файлов.' },
+  { id:'doc_id', x:1424, y:752, t:'Исполнительная\nдокументация', tags:['файл','согл.'],
+    what:'ИД по работам: АОСР, АООК, схемы, протоколы испытаний. Тот же жизненный цикл, что и у РД/ПД. Экран группирует ИД по работам графика.',
+    who:'Права «Документы».', where:'Документы → ИД; карточка КС-2 (справочно).', store:'Журнал действий + файлы.' },
+  { id:'doc_struct', x:1652, y:752, t:'Структура\nдокументации', k:'config', tags:['настр.'],
+    what:'Категории (системные и свои), разделы, плановые позиции с контрольным сроком и работами.',
+    who:'Права «Настройки».', where:'Настройки → Документы.', store:'Описание объекта.' },
+  { id:'doc_rep', x:1196, y:880, t:'Ежемесячные\nотчёты ТЗ', k:'calc', tags:['авто'],
+    what:'Система сама создаёт запись «Выпущен» за каждый прошедший месяц (за последние 12, начиная со старта объекта). Ни файла, ни содержания у записи нет.',
+    who:'Только система.', where:'Документы → Отчёты.', store:'Не хранится, создаётся при показе.' },
+  { id:'doc_perm', x:1424, y:880, t:'Разрешения\nи прочие', tags:['файл'],
+    what:'Разрешения, отчёты, свои категории: список с контрольным сроком; просроченный срок подсвечивается.',
+    who:'Права «Документы».', where:'Документы.', store:'Журнал действий + файлы.' }
+];
+N.forEach(n => { n.w = n.w || 196; n.h = n.h || 58; n.k = n.k || 'input'; });
+const NB = Object.fromEntries(N.map(n => [n.id, n]));
+
+/* ===================== СВЯЗИ ОБЩЕЙ КАРТЫ ===================== */
+const E = [
+  ['c_set','hub','action','создаёт и меняет описание объекта'],
+  ['c_set','p_task','action','этапы, работы, вехи, связи'],
+  ['c_set','f_item','action','статьи, резерв, договоры'],
+  ['c_set','doc_struct','action','категории, разделы, плановые позиции'],
+  ['c_party','hub','data','реквизиты: заказчик, ТЗ, ГП, проектировщик'],
+  ['f_ct','c_party','auto','подрядчик договора добавляется в участники'],
+  ['c_party','d_res','data','список подрядчиков для ввода численности'],
+  ['c_party','m_cal','data','участники приёмки: ТЗ, подрядчик, заказчик'],
+  ['c_party','m_let','data','письмо подписывается от заказчика'],
+  ['c_party','doc_rdpd','data','проектировщик — организация по умолчанию'],
+  ['c_rd','p_ready','calc','режим и веса готовности'],
+  ['p_stage','p_task','data','группировка; вес этапа'],
+  ['p_task','p_cpm','calc','даты, длительности, связи'],
+  ['p_ms','p_cpm','calc','финальная веха = срок ввода'],
+  ['p_fact','p_cpm','calc','% и объём → остаток длительности'],
+  ['p_cpm','p_ready','calc','план и факт на дату'],
+  ['p_cpm','m_cal','auto','начало, окончание, вехи — по прогнозу и факту'],
+  ['p_cpm','r_att','mgmt','веха позже директивного; критический путь +3 дн.'],
+  ['p_ready','r_over','mgmt','показатель «Готовность»'],
+  ['p_cpm','r_over','mgmt','показатель «Срок», мини-Гант'],
+  ['p_ready','r_port','mgmt','готовность, взвешенная по бюджету'],
+  ['p_task','f_ct','data','работа → договор и статья'],
+  ['p_task','f_eac','calc','стоимость работ без договора = незаконтрактовано'],
+  ['p_fact','f_done','calc','доля выполнения работ договора'],
+  ['f_ct','f_done','calc','сумма договора с доп. соглашениями'],
+  ['f_done','f_ks','calc','«не предъявлено» → объём новой заявки'],
+  ['f_ks','f_ct','appr','заявлено → принято → согласовано'],
+  ['f_ks','m_cal','action','«Назначить приёмку» создаёт событие; статус меняется после сохранения'],
+  ['f_pay','f_ct','data','оплачено (объекты с вводом финансов)'],
+  ['f_ct','f_eac','calc','законтрактовано'],
+  ['f_item','f_eac','calc','утверждённый бюджет и резерв'],
+  ['m_risk','p_cpm','calc','«Реализуется»: +дни к работе'],
+  ['m_risk','f_eac','calc','«Реализуется»: стоимость к статье'],
+  ['f_eac','r_att','mgmt','прогноз > бюджета; резерв > 50 %'],
+  ['f_eac','r_over','mgmt','показатель «Бюджет»'],
+  ['f_eac','r_port','mgmt','бюджет и освоение портфеля'],
+  ['doc_id','f_ks','doc','ИД по работам заявки — справочно в карточке КС-2'],
+  ['doc_id','p_task','doc','ИД привязана к работам'],
+  ['doc_id','m_cal','auto','АОСР / АООК → событие освидетельствования'],
+  ['doc_rdpd','p_task','doc','документ виден в карточке работы'],
+  ['doc_rdpd','p_task','appr','в производство передаётся только согласованная редакция'],
+  ['doc_rdpd','m_cal','auto','передача в производство → «Выдача РД»'],
+  ['doc_rdpd','r_chk','auto','работа завершена, а РД не передана'],
+  ['doc_struct','doc_rdpd','data','плановые позиции «Не загружено»'],
+  ['m_cal','m_let','action','подготовить приглашение → черновик письма'],
+  ['m_cal','m_prot','data','протокол ссылается на совещание (исходные данные)'],
+  ['m_prot','m_ord','action','поручение по протоколу'],
+  ['m_ord','m_cal','auto','срок поручения — событие календаря'],
+  ['m_ord','m_cal','action','«Назначить контроль» → совещание'],
+  ['m_ord','r_att','mgmt','просроченные и критические'],
+  ['m_ord','p_task','data','связь с работами (видна в карточке работы)'],
+  ['m_ord','doc_rdpd','data','связь с документами'],
+  ['m_risk','m_ord','data','поручения по рискам (только исходные данные)'],
+  ['m_dec','m_risk','data','показываются на странице рисков'],
+  ['d_photo','p_task','doc','фото привязано к работе; дата ≥ начала работы'],
+  ['d_photo','r_over','mgmt','последние фото на обзоре'],
+  ['d_photo','m_risk','doc','фото как подтверждение по риску'],
+  ['d_res','r_over','mgmt','показатель «Ресурсы»'],
+  ['d_res','r_port','mgmt','«на площадках»'],
+  ['r_chk','c_set','auto','новые ошибки блокируют сохранение'],
+  ['hub','doc_rep','auto','запись за каждый прошедший месяц'],
+  ['r_att','r_over','mgmt','первые 6 пунктов на обзоре'],
+  /* недостающие */
+  ['d_met','p_fact','miss','объём за период → факт работы'],
+  ['d_res','p_cpm','miss','численность ↔ темп и прогноз'],
+  ['f_pay','f_ks','miss','платёж по конкретной КС-2 → «Оплачено»'],
+  ['doc_id','f_ks','miss','подписанная ИД → условие приёмки'],
+  ['doc_rdpd','p_fact','miss','РД в производстве → допуск к началу работ'],
+  ['m_risk','m_ord','miss','создать поручение по риску в интерфейсе'],
+  ['m_cal','m_prot','miss','совещание → протокол в интерфейсе'],
+  ['f_ks','r_att','miss','КС-2, ожидающие действия'],
+  ['doc_rdpd','r_att','miss','документы на проверке, просроченные позиции'],
+  ['m_risk','r_att','miss','высокие риски'],
+  ['r_over','doc_rep','miss','данные месяца → содержание отчёта'],
+  ['c_roles','c_party','miss','пользователь ↔ организация-участник'],
+  ['p_cpm','m_risk','miss','отставание → предложить риск'],
+  ['p_fact','f_done','miss','подтверждение факта ТЗ перед «выполнено»']
+].map((e, i) => ({ id:'e' + i, a:e[0], b:e[1], t:e[2], l:e[3] }));
+
+/* ===================== РАЗРЫВЫ ===================== */
+const GCAT = {
+  closed:  { n:'Замкнутые связи', d:'Процесс логично начинается и заканчивается внутри системы.', c:'g-closed' },
+  broken:  { n:'Оборванные связи', d:'Данные появились, но дальше система их почти не использует.', c:'g-broken' },
+  dup:     { n:'Дублирование', d:'Одна и та же информация вводится или хранится в нескольких местах.', c:'g-dup' },
+  iso:     { n:'Изолированные разделы', d:'Функции, которые почти не влияют на остальную систему.', c:'g-iso' },
+  miss:    { n:'Недостающие связи', d:'Где можно использовать уже имеющиеся данные вместо ручного ввода.', c:'g-miss' },
+  unclear: { n:'Неочевидная логика', d:'Где пользователю трудно понять, что произойдёт после действия.', c:'g-unclear' },
+  manual:  { n:'Избыточный ручной труд', d:'Система уже знает нужное, но человек вводит это сам.', c:'g-manual' }
+};
+const G = [
+  ['closed','Факт → прогноз → внимание → обзор → график','Внесённый факт пересчитывает прогноз и критический путь, отставание попадает в «Требует внимания», с обзора руководитель переходит на Гант к работе и её карточке.',['p_fact','p_cpm','r_att','r_over']],
+  ['closed','Поручение от постановки до снятия','Постановка → срок в календаре → автоматическая просрочка → «Требует внимания» и бейдж → выполнение → пункт снимается.',['m_ord','m_cal','r_att']],
+  ['closed','Редакции документа','Загрузка → проверка → возврат с замечаниями → новая редакция → согласование → передача → «Выдача РД»; прежняя редакция автоматически становится «Заменено».',['doc_rdpd','m_cal']],
+  ['closed','КС-2 до расчётного периода','Возвраты при замечаниях и при отказе в приёмке; непринятый объём снова становится «не предъявлено», можно подать новую заявку.',['f_ks','f_done']],
+  ['closed','Реализующийся риск → срок и деньги','Дни риска сдвигают работу и ввод объекта, стоимость попадает в прогноз статьи; превышение бюджета выходит в «Требует внимания».',['m_risk','p_cpm','f_eac','r_att']],
+  ['closed','Настройки под контролем модели','Каждое сохранение проходит пробную сборку: цикл связей или новая ошибка не дают сохранить изменение.',['c_set','r_chk']],
+
+  ['broken','КС-2 останавливается на «расчётном периоде»','Статус «Оплачено» из процесса недостижим. Платежи вводятся отдельно, только у объектов с вводом финансов, и к КС-2 не привязаны.',['f_ks','f_pay']],
+  ['broken','Письмо остаётся черновиком','После «Сохранить черновик» нет регистрации, отправки, ответа; входящие письма в интерфейсе не регистрируются.',['m_let']],
+  ['broken','Результат приёмки не возвращается в событие','Событие приёмки «выполнено» только по дате. Результат (принято, частично, не принято) живёт в КС-2 и с ИД и фактом работ не связан.',['m_cal','f_ks','doc_id']],
+  ['broken','Передача РД в производство','Используется только для события «Выдача РД» и предупреждения в «Проверке данных». На начало работ и на статус работы не влияет.',['doc_rdpd','p_fact']],
+  ['broken','Контрольный срок плановой позиции документации','Срок виден в карточке документа (и подсвечивается для отчётов и разрешений), но не попадает ни в календарь, ни в «Требует внимания».',['doc_struct','doc_rdpd']],
+  ['broken','«Проверка данных» без перехода к исправлению','Показан перечень ошибок (в меню — первые четыре на объект, полностью — в настройках), но из него нельзя перейти к работе, договору или документу, где ошибка.',['r_chk']],
+  ['broken','Меры по риску не становятся поручениями','У поручения есть поле «риск», но заполнено оно только в исходных данных; в форме поручения выбора риска нет.',['m_risk','m_ord']],
+
+  ['dup','Два пути КС-2','У объектов с вводом финансов одновременно доступны заявка подрядчика с согласованием и «Внести КС-2» в договоре сразу со статусом.',['f_ks']],
+  ['dup','Два признака оплаты','Статус акта «Оплачено» и платёж «за акт» вводятся независимо и могут расходиться.',['f_ks','f_pay']],
+  ['dup','Факт и веса в двух формах','Факт работы — в «Внести факт» и в форме работы. Веса — в форме работы и в таблице весов готовности.',['p_fact','p_task','c_rd']],
+  ['dup','Организации в пяти местах','Справочник, участники объекта, команда проекта (организация текстом), подрядчик договора (текстом), подрядчики в ресурсах (по названию). Переименование организации рвёт связь с договорами.',['c_party','f_ct','d_res']],
+  ['dup','Объём работ дважды','Фактический объём работы графика и производственный показатель с тем же смыслом (м³ бетона, т арматуры) ведутся независимо.',['p_fact','d_met']],
+  ['dup','Ручные события рядом с системными','Пользователь может вручную создать «Выдачу РД», «Освидетельствование», «Приёмку», «Протокольное поручение», которые система уже создаёт сама из документов, КС-2 и поручений.',['m_cal']],
+  ['dup','Стоимость в трёх местах','Стоимость работы, лимит статьи и сумма договора сверяются только предупреждением. Площадь — в паспорте и в ТЭП.',['p_task','f_item','f_ct']],
+
+  ['iso','Производственные показатели','Журнал по датам с вложениями не влияет ни на график, ни на обзор, ни на портфель.',['d_met']],
+  ['iso','Управленческие решения','Только показ на странице рисков и только из исходных данных.',['m_dec']],
+  ['iso','Ежемесячные отчёты ТЗ','Автоматические записи «Выпущен» без файла и содержания.',['doc_rep']],
+  ['iso','Ресурсы','Показываются в KPI и графике движения, но на прогноз не влияют и с работами не связаны.',['d_res']],
+  ['iso','ТЭП и команда проекта','Вводятся в настройках, но на экранах объекта не показываются и в расчётах не участвуют.',['c_party']],
+  ['iso','Разрешения','Список с контрольным сроком, без связи с работами и вехами.',['doc_perm']],
+
+  ['miss','Показатель → факт работы','Журнал «бетон, м³ за неделю» мог бы пополнять фактический объём работы, к которой показатель уже привязан.',['d_met','p_fact']],
+  ['miss','Отставание → риск или поручение','Система видит работу критического пути с прогнозом +N дней, но риск или поручение по ней создаются отдельно и вручную.',['p_cpm','m_risk','m_ord']],
+  ['miss','Шире «Требует внимания»','КС-2, ожидающие действия; документы на проверке и возвращённые; высокие риски; просроченные плановые позиции — данные есть, в список не попадают.',['r_att','f_ks','doc_rdpd','m_risk']],
+  ['miss','ИД как условие приёмки','ИД по работам заявки уже показывается в карточке КС-2, но на приёмку не влияет.',['doc_id','f_ks']],
+  ['miss','Платёж ↔ КС-2','Платёж «за акт» мог бы закрывать конкретную КС-2 и переводить её в «Оплачено».',['f_pay','f_ks']],
+  ['miss','Совещание → протокол → поручения','Событие-совещание есть, поручения есть, связующего протокола в интерфейсе нет.',['m_cal','m_prot','m_ord']],
+  ['miss','Данные месяца → ежемесячный отчёт','Готовность, срок, бюджет, КС-2, поручения и фото за месяц уже есть в модели.',['doc_rep','r_over']],
+  ['miss','Пользователь ↔ организация','Роль доступа не связана с участником, поэтому нельзя показать подрядчику только его шаги.',['c_roles','c_party']],
+
+  ['unclear','Два хранилища — два сброса','«Сбросить к исходным данным» откатывает факт, ресурсы, показатели, фото, риски, акты и платежи, но не трогает заявки КС-2, документы, поручения, события и письма. «Очистить журнал действий» — наоборот.',['hub','c_set']],
+  ['unclear','Факт без истории','«Внести факт» перезаписывает текущее значение. Прошлый факт на кривой готовности — интерполяция, а не записанные значения.',['p_fact','p_ready']],
+  ['unclear','Один пользователь за двоих','Кнопки «Подрядчик:» и «Технический заказчик:» в КС-2 доступны одной роли; в истории пишется метка участника, а не пользователь.',['f_ks','c_roles']],
+  ['unclear','«Назначить приёмку» меняет статус не сразу','Статус КС-2 становится «Направлено на приёмку» только после сохранения события. Если закрыть форму, статус прежний.',['f_ks','m_cal']],
+  ['unclear','Правка события отвязывает его от графика','После редактирования дата события больше не двигается вместе с работой.',['m_cal']],
+  ['unclear','Риск влияет только в статусе «Реализуется»','Риск «Открыт» с указанными днями и стоимостью на срок и прогноз бюджета не влияет.',['m_risk']],
+  ['unclear','Скрытая работа продолжает считаться','Скрытая работа исчезает с Ганта, но участвует в готовности и прогнозе. Архивирование этапа архивирует все его работы, восстановление — все обратно.',['p_task','p_stage']],
+  ['unclear','Режим финансов не виден','У демо-объектов история КС-2 строится моделью (закрытие 25-го числа), у новых — только из введённого. В интерфейсе режим не показан и не переключается.',['f_ks','f_eac']],
+
+  ['manual','Объём вводится дважды','В показателях и в факте работы.',['d_met','p_fact']],
+  ['manual','Влияние риска задаётся днями вручную','Хотя сдвиг работы уже виден в расчёте графика.',['m_risk','p_cpm']],
+  ['manual','Оплата вводится дважды','После статуса «Оплачено» нужен отдельный платёж, и наоборот.',['f_ks','f_pay']],
+  ['manual','Отчёт за месяц собирается вне системы','Данные за месяц в системе есть, отчёт не формируется.',['doc_rep']],
+  ['manual','План численности по неделям','Вводится вручную, без опоры на работы графика.',['d_res']]
+].map((g, i) => ({ id:'g' + i, cat:g[0], t:g[1], d:g[2], nodes:g[3] }));
+
+/* ===================== ВОПРОСЫ ===================== */
+const Q = [
+  ['Должен ли факт выполнения, внесённый инженером, подтверждаться Техническим заказчиком до того, как он попадёт в «выполнено по договору» и станет основанием объёма КС-2?','Сейчас факт сразу меняет прогноз, освоение и «не предъявлено».',['p_fact','f_done']],
+  ['Должен ли производственный показатель за день или неделю пополнять фактический объём связанной работы графика, или это два независимых учёта?','Сейчас объём вводится в двух местах.',['d_met','p_fact']],
+  ['Нужна ли история выполнения работ по датам вместо перезаписи текущего значения?','От этого зависят честная кривая факта и отчёт за период.',['p_fact','p_ready']],
+  ['Должна ли подписанная ИД по работам заявки быть условием приёмки КС-2?','Сейчас ИД показывается в карточке КС-2 только справочно.',['doc_id','f_ks']],
+  ['Где заканчивается процесс КС-2: на расчётном периоде или на оплате, и должен ли платёж фиксироваться по конкретной КС-2?','Сейчас «Оплачено» из процесса недостижимо.',['f_ks','f_pay']],
+  ['Какой путь КС-2 считать основным для объектов с вводом финансов: заявку с согласованием или ручной ввод акта? Нужны ли оба?','Оба пути сейчас доступны одновременно.',['f_ks']],
+  ['Должна ли передача РД в производство быть условием начала работы, или достаточно предупреждения?','Сейчас предупреждение появляется только после завершения работы.',['doc_rdpd','p_fact']],
+  ['Что ещё должно попадать в «Требует внимания»: КС-2 в ожидании действия, документы на проверке, высокие риски, просроченные плановые позиции?','Сейчас там только поручения, вехи, критический путь и бюджет.',['r_att']],
+  ['Должен ли пользователь принадлежать организации-участнику, чтобы подрядчик и ТЗ видели и выполняли только свои шаги?','Сейчас роль доступа и участник объекта не связаны.',['c_roles','c_party']],
+  ['Должны ли протокол совещания и ежемесячный отчёт создаваться в системе из уже имеющихся данных?','Сейчас протоколы есть только в исходных данных, а отчёт — пустая запись.',['m_prot','doc_rep']]
+];
+
+/* ===================== КОНСТРУКЦИЯ ===================== */
+const TREE = [
+  ['Портфель','#','Все объекты: показатели, сроки, сравнение. Вход в «Добавить объект» и «Администрирование».',['Плитки портфеля','Сроки портфеля','Сравнение проектов'],['r_port']],
+  ['Обзор объекта','#объект','Паспорт и сводка руководителя. Каждый показатель ведёт в свой раздел.',['4 показателя','График реализации','Требует внимания','Фотохроника'],['r_over','r_att']],
+  ['Реализация / График','#объект.schedule','Гант с фильтрами и масштабами, карточка работы, «Внести факт», динамика готовности, панель ресурсов.',['Гант','Карточка работы','Внести факт','Динамика готовности'],['p_stage','p_task','p_ms','p_fact','p_cpm','p_ready']],
+  ['Ресурсы','#объект.resources','Движение рабочей силы, по подрядчикам, техника; ввод данных за неделю.',['Рабочая сила','По подрядчикам','Техника'],['d_res']],
+  ['Производственные показатели','#объект.metrics','Свои показатели объекта, журнал значений, накопительно, вложения.',['Карточки показателей','История','Внести значения'],['d_met']],
+  ['Календарь','#объект.calendar','Месяц, неделя, повестка; карточка события; черновик письма-приглашения.',['Месяц','Неделя','Повестка','Событие','Письмо'],['m_cal','m_let']],
+  ['Бюджет','#объект.budget','Статьи, структура бюджета, освоение, договоры, КС-2 в работе; карточки договора и КС-2.',['Статьи','Договор','КС-2','Оплаты'],['f_item','f_ct','f_ks','f_pay','f_done','f_eac']],
+  ['Документы','#объект.docs','РД, ПД, ИД, КС, отчёты, письма, протоколы, разрешения, договоры, свои категории; загрузка и движение.',['РД','ПД','ИД','КС','Отчёты','Письма','Протоколы','Разрешения','Договоры'],['doc_rdpd','doc_id','doc_rep','doc_perm','m_let','m_prot']],
+  ['Протокольные поручения','#объект.orders','Список с фильтрами, карточка поручения, история, контроль исполнения.',['Список','Карточка','Назначить контроль'],['m_ord','m_prot']],
+  ['Риски','#объект.risks','Плитки, матрица 5×5, поручения по рискам, решения, реестр.',['Матрица','Реестр','Решения'],['m_risk','m_dec']],
+  ['Фотохроника','#объект.photos','Фото по месяцам, фильтр по этапам и категориям, просмотр.',['Лента','Фильтры','Просмотр'],['d_photo']],
+  ['Настройки объекта','#объект.settings','Основное, участники, разделы, график, готовность, бюджет, документы, ресурсы, показатели, риски, фото, проверка данных, журнал.',['13 вкладок','Опасная зона'],['c_set','c_party','c_rd','doc_struct']],
+  ['Добавить объект','#new','Мастер из 12 шагов с черновиком; создание блокируется при ошибках.',['12 шагов','Проверка'],['c_set']],
+  ['Администрирование','#admin','Объекты, организации, роли и права, хранилище, экспорт и импорт, журнал изменений.',['Объекты','Организации','Роли','Экспорт/импорт','Журнал'],['c_roles','c_party']]
+];
+const STORES = [
+  ['Описание объекта','реестр, у демо-объектов — копия',['паспорт, даты, статус, разделы','участники; общий справочник организаций','этапы, работы, вехи и факт по ним','правила готовности и веса','статьи, резерв, договоры, доп. соглашения','введённые акты и платежи','структура документации','ресурсы, показатели и журнал','риски, фото'],'«Сбросить к исходным данным» (только демо-объекты) возвращает всё это к датасету.'],
+  ['Журнал действий','отдельно для каждого объекта',['события календаря и их правки','документы, загруженные редакции и их движение','поручения и их статусы','заявки КС-2 и переходы статусов','черновики писем'],'«Очистить журнал действий» (Администратор) удаляет всё это, не трогая описание объекта.'],
+  ['Файлы','хранилище браузера',['обложки объектов','фото','файлы редакций документов','вложения к показателям'],'Удаление объекта или сброс не удаляют файлы. Экспорт конфигурации файлы не включает.']
+];
+
+/* ===================== СЦЕНАРИИ ===================== */
+const KL = { action:'Действие', auto:'Автоматически', calc:'Расчёт', appr:'Согласование', doc:'Документ', mgmt:'Руководителю', data:'Данные', miss:'Нет в системе', stop:'Процесс обрывается' };
+const FLOWS = [
+ { id:'f1', t:'Подключение нового объекта и запуск', d:'От «Добавить объект» до текущей работы и отчётности. Ничего не программируется: объект описывается данными.',
+   lanes:[['adm','Администратор'],['sys','Система'],['team','Команда объекта'],['lead','Руководитель видит']], cols:9, cw:172,
+   nodes:[
+    ['n1','adm',1,'action','«Добавить объект»','только с правом «Создание объектов»'],
+    ['n2','adm',2,'action','Основное, участники, разделы'],
+    ['n2a','sys',2,'auto','Организации → общий справочник; разделы → меню объекта'],
+    ['n3','adm',3,'action','График: этапы, работы, вехи, связи; правила готовности'],
+    ['n3a','sys',3,'calc','Пробная сборка: циклы связей, ошибки дат'],
+    ['n4','adm',4,'action','Бюджет: статьи, резерв, договоры','финансы — только по внесённым данным'],
+    ['n4a','sys',4,'auto','Подрядчик договора → участники'],
+    ['n5','adm',5,'action','Документы, ресурсы, показатели, риски, фото','по необходимости, шаги можно пропустить'],
+    ['n6','adm',6,'appr','Проверка → «Создать объект»','любая ошибка блокирует создание'],
+    ['n6a','sys',6,'auto','Объект в портфеле; черновик мастера очищен'],
+    ['n6b','lead',6,'mgmt','Обзор объекта','что не настроено — «не рассчитывается», без выдуманных цифр'],
+    ['n7','team',7,'action','Текущая работа: факт, ресурсы, показатели, фото, документы, КС-2, поручения, события'],
+    ['n8','sys',8,'calc','Пересчёт графика, готовности, бюджета, календаря, «Требует внимания»'],
+    ['n8b','lead',8,'mgmt','Обзор, «Требует внимания», портфель'],
+    ['n9','lead',9,'miss','Отчёт за месяц из данных системы'],
+    ['n9b','sys',9,'stop','Отчёт ТЗ — запись без содержания']
+   ],
+   links:[['n1','n2','action'],['n2','n2a','auto'],['n2','n3','action'],['n3','n3a','calc'],['n3','n4','action'],['n4','n4a','auto'],['n4','n5','action'],['n5','n6','action'],['n6','n6a','auto'],['n6a','n6b','mgmt'],['n6a','n7','data','объект доступен'],['n7','n8','calc'],['n8','n8b','mgmt'],['n8b','n9','miss'],['n8','n9b','auto']],
+   foot:['<b>Где заканчивается:</b> на обзоре и портфеле. Регулярной отчётности из данных система не формирует.','<b>Ручной ввод:</b> всё, что слева. <b>Автоматически:</b> справочник организаций, участники из договоров, проверка модели, системные события календаря.'] },
+
+ { id:'f2', t:'Работа → выполнение → приёмка → КС-2 → бюджет', d:'Основание объёма КС-2 система берёт из факта по графику. Подтверждения факта и оплаты в процессе нет.',
+   lanes:[['eng','Инженер · площадка'],['gc','Подрядчик'],['tz','Технический заказчик'],['sys','Система'],['lead','Бюджет · руководитель']], cols:12, cw:142,
+   nodes:[
+    ['a1','eng',1,'action','Внести факт по работе договора','начало, объём или %, окончание'],
+    ['a1m','tz',1,'miss','Подтверждение факта'],
+    ['a2','sys',2,'calc','Выполнено по договору','сумма × доля выполнения работ'],
+    ['a2b','lead',2,'mgmt','Показатель «Бюджет»: выполнено и освоение'],
+    ['a3','sys',3,'calc','«Не предъявлено»','выполнено − предъявлено'],
+    ['a4','gc',4,'action','Новая заявка КС-2','сумма по умолчанию = не предъявлено; «Черновик»'],
+    ['a5','gc',5,'appr','Направить на предварительную проверку'],
+    ['a6','tz',6,'appr','Проверка: предварительно согласовать или замечания'],
+    ['a6r','gc',6,'action','Исправить и направить повторно'],
+    ['a7','tz',7,'action','Назначить приёмку','событие с участниками и работами'],
+    ['a7m','eng',7,'miss','Подписанная ИД по работам как условие','сейчас только справочно'],
+    ['a7a','sys',7,'auto','Событие приёмки; КС-2 → «Направлено на приёмку»','приглашение — черновик'],
+    ['a8','tz',8,'appr','Результат: принято, частично, не принято'],
+    ['a8a','sys',8,'calc','Непринятая часть → снова «не предъявлено»'],
+    ['a9','gc',9,'appr','Сформировать КС-2 по принятому'],
+    ['a10','tz',10,'appr','Согласовать КС-2'],
+    ['a10a','lead',10,'calc','Договор и статья: согласовано, остаток'],
+    ['a11','tz',11,'appr','Включить в расчётный период'],
+    ['a12','lead',12,'stop','Оплата не следует из процесса','«Оплачено» недостижимо'],
+    ['a12m','sys',12,'miss','Платёж по конкретной КС-2']
+   ],
+   links:[['a1','a2','calc'],['a1','a1m','miss'],['a2','a2b','mgmt'],['a2','a3','calc'],['a3','a4','data','объём'],['a4','a5','appr'],['a5','a6','appr'],['a6','a6r','appr','замечания'],['a6r','a6','appr','повторно'],['a6','a7','appr'],['a7','a7a','auto'],['a7m','a8','miss'],['a7a','a8','appr','приёмка'],['a8','a8a','calc'],['a8a','a3','calc','возврат объёма'],['a8','a9','appr','принято'],['a9','a10','appr'],['a10','a10a','calc'],['a10','a11','appr'],['a11','a12','miss'],['a12m','a12','miss']],
+   foot:['<b>Второй путь:</b> у объектов с вводом финансов в договоре есть «Внести КС-2» (акт сразу со статусом) и «Внести оплату» — минуя этот процесс.','<b>Роли:</b> подписи «Подрядчик» и «ТЗ» — метки шагов; оба шага может выполнить один пользователь с правом «Внесение данных».'] },
+
+ { id:'f3', t:'РД / ПД: от плановой позиции до производства работ', d:'Документ — один объект с редакциями. Передача РД в производство создаёт событие, но к работам не допускает.',
+   lanes:[['set','Настройка'],['up','Проектировщик · загружающий'],['tz','Технический заказчик'],['gc','Подрядчик · производство'],['sys','Система']], cols:8, cw:170,
+   nodes:[
+    ['d1','set',1,'data','Плановая позиция: шифр, раздел, контрольный срок, работы','статус «Не загружено»'],
+    ['d1m','set',3,'miss','Просрочка контрольного срока → «Требует внимания»'],
+    ['d2','up',2,'doc','Загрузить редакцию','файл, шифр, ред., дата, работы'],
+    ['d2a','sys',2,'auto','«Загружено»','номер следующей ред. подсказывается'],
+    ['d3','up',3,'appr','Направить на проверку'],
+    ['d4','tz',4,'appr','Согласовать или вернуть с замечаниями'],
+    ['d4r','up',4,'action','Загрузить новую редакцию'],
+    ['d5','tz',5,'appr','Передать в производство работ','получатель и дата'],
+    ['d5a','gc',5,'data','Получатель — текст','по умолчанию — подрядчик договора работы'],
+    ['d6','sys',6,'auto','Событие «Выдача РД»; прежняя ред. → «Заменено»'],
+    ['d7','sys',7,'doc','Документ в карточке работы, событиях, поручениях, письмах'],
+    ['d7m','gc',7,'miss','Начало работы только при РД в производстве'],
+    ['d8','sys',8,'auto','Предупреждение: работа завершена, а РД не передана','в «Проверке данных»'],
+    ['d8s','tz',8,'stop','Дальше передача не используется']
+   ],
+   links:[['d1','d2','doc'],['d1','d1m','miss'],['d2','d2a','auto'],['d2','d3','appr'],['d3','d4','appr'],['d4','d4r','appr','вернуть'],['d4r','d3','action','снова'],['d4','d5','appr','согласовано'],['d5','d5a','data'],['d5','d6','auto'],['d6','d7','doc'],['d7','d7m','miss'],['d7','d8','auto'],['d6','d8s','data']],
+   foot:['<b>Аннулирование:</b> доступно для редакций «Загружено», «На проверке», «Возвращено».','<b>ИД:</b> тот же цикл; для АОСР и АООК система дополнительно создаёт событие освидетельствования.'] },
+
+ { id:'f4', t:'Данные с площадки → факт → график → отклонение → риск → обзор', d:'Из трёх потоков данных с площадки в расчёт графика попадает только факт работ. Показатели и ресурсы живут отдельно.',
+   lanes:[['site','Площадка · инженер'],['pm','Руководитель проекта'],['sys','Система'],['lead','Руководитель · директор']], cols:7, cw:178,
+   nodes:[
+    ['s1','site',1,'action','Показатели за дату','план, факт, комментарий, файл'],
+    ['s1a','sys',1,'calc','Журнал: накопительно, отклонение от плана периода'],
+    ['s1s','lead',1,'stop','На обзор и в портфель не попадает'],
+    ['s2','site',2,'action','Ресурсы за неделю','рабочие, ИТР, по подрядчикам, техника'],
+    ['s2a','sys',2,'calc','Текущая численность = последняя неделя'],
+    ['s2b','lead',2,'mgmt','Показатель «Ресурсы», «на площадках» в портфеле'],
+    ['s3','site',3,'doc','Фото: работа, этап, категория'],
+    ['s3b','lead',3,'mgmt','Фото на обзоре и в карточке работы'],
+    ['s4','site',4,'action','Внести факт по работе','перезапись текущего значения'],
+    ['s4a','sys',4,'calc','Прогноз, резерв, критический путь'],
+    ['s5','sys',5,'calc','Статус: Отставание, Просрочено; сдвиг вехи'],
+    ['s5b','lead',5,'mgmt','«Требует внимания»; показатели «Готовность» и «Срок»'],
+    ['s6','pm',6,'action','Риск: «Реализуется», влияние на работу и статью','дни и стоимость вручную'],
+    ['s6a','sys',6,'calc','Сдвиг прогноза ввода; стоимость в прогноз бюджета'],
+    ['s7','lead',7,'mgmt','Срок и бюджет на обзоре','сами риски — в бейдже меню и портфеле, не в «Требует внимания»']
+   ],
+   links:[['s1','s1a','calc'],['s1a','s1s','data'],['s1','s4','miss','объём'],['s2','s2a','calc'],['s2a','s2b','mgmt'],['s2a','s4a','miss','темп'],['s3','s3b','mgmt'],['s4','s4a','calc'],['s4a','s5','calc'],['s5','s5b','mgmt'],['s5','s6','miss','предложить риск'],['s6','s6a','calc'],['s6a','s7','mgmt']],
+   foot:['<b>Ежедневной записи «что сделано сегодня» в системе нет:</b> факт хранится только текущим значением, а показатели и ресурсы не связаны с работами.'] },
+
+ { id:'f5', t:'Совещание → протокол → поручение → контроль', d:'Поручения замкнуты на календарь и «Требует внимания». Протокол и письмо — места, где цепочка рвётся.',
+   lanes:[['org','Организатор · ТЗ или РП'],['own','Ответственный'],['sys','Система'],['lead','Руководитель']], cols:8, cw:172,
+   nodes:[
+    ['m1','org',1,'action','Совещание в календаре','участники, работы, документы, серия'],
+    ['m2','org',2,'action','Подготовить приглашение → сохранить черновик'],
+    ['m2a','sys',2,'data','Письмо «Черновик»','адресов и отправки нет'],
+    ['m2s','own',2,'stop','Приглашение передаётся вне системы'],
+    ['m3','org',3,'miss','Протокол по итогам совещания','в интерфейсе не создаётся'],
+    ['m4','org',4,'action','Поручение','текст, ответственный, срок, приоритет, протокол, работы, документы'],
+    ['m4m','own',4,'miss','Уведомление ответственному','ответственный — текст'],
+    ['m4a','sys',4,'auto','Срок поручения — событие календаря'],
+    ['m5','own',5,'action','Принять в работу; комментарий'],
+    ['m6','sys',6,'auto','Срок прошёл → «Просрочено»'],
+    ['m6b','lead',6,'mgmt','«Требует внимания» и бейдж «Поручения»','критические — сразу'],
+    ['m7','org',7,'action','Назначить контроль → совещание'],
+    ['m8','own',8,'action','Выполнено с комментарием'],
+    ['m8a','sys',8,'auto','Пункт снят из «Требует внимания»']
+   ],
+   links:[['m1','m2','action'],['m2','m2a','auto'],['m2a','m2s','data'],['m1','m3','miss'],['m3','m4','miss','из протокола'],['m4','m4a','auto'],['m4','m4m','miss'],['m4a','m5','data'],['m5','m6','auto','срок'],['m6','m6b','mgmt'],['m6','m7','action'],['m7','m8','data'],['m8','m8a','auto']],
+   foot:['<b>У демо-объектов</b> протоколы есть в исходных данных, и поручение можно поставить «по протоколу» с номером «протокол/№». У новых объектов протоколов нет.'] }
+];
+
+const ROLEFLOW = { id:'r1', t:'Участники в трёх процессах', d:'Как шаги распределены между организациями объекта. В DEMO каждый шаг может выполнить любой пользователь с нужным правом.',
+  lanes:[['gc','Подрядчик · ГП'],['tz','Технический заказчик · стройконтроль'],['des','Проектировщик'],['cust','Заказчик · директор'],['sys','Система']], cols:13, cw:132,
+  groups:[[1,3,'Документы'],[4,10,'КС-2'],[11,13,'Поручения и обзор']],
+  nodes:[
+   ['r1','des',1,'doc','Загружает редакцию РД / ПД'],
+   ['r2','tz',2,'appr','Согласует или возвращает'],
+   ['r3','gc',3,'data','Получает РД в производство','запись получателя'],
+   ['r3a','sys',3,'auto','«Выдача РД» в календаре'],
+   ['r4','gc',4,'action','Заявка КС-2'],
+   ['r5','tz',5,'appr','Проверка, замечания'],
+   ['r6','tz',6,'action','Назначает приёмку'],
+   ['r6a','sys',6,'auto','Событие и приглашение-черновик'],
+   ['r6c','cust',6,'data','Указан участником приёмки'],
+   ['r7','tz',7,'appr','Принимает полностью, частично или нет'],
+   ['r8','gc',8,'appr','Формирует КС-2 по принятому'],
+   ['r9','tz',9,'appr','Согласует, включает в период'],
+   ['r10','cust',10,'stop','Оплата — вне процесса'],
+   ['r11','tz',11,'action','Ставит поручение'],
+   ['r12','gc',12,'action','Исполняет','ответственный — текст'],
+   ['r12a','sys',12,'auto','Просрочка по сроку'],
+   ['r13','cust',13,'mgmt','Видит обзор, «Требует внимания», портфель']
+  ],
+  links:[['r1','r2','appr'],['r2','r3','appr'],['r3','r3a','auto'],['r4','r5','appr'],['r5','r6','appr'],['r6','r6a','auto'],['r6a','r6c','data'],['r6a','r7','appr'],['r7','r8','appr'],['r8','r9','appr'],['r9','r10','miss'],['r11','r12','data'],['r12','r12a','auto'],['r12a','r13','mgmt']]
+};
+
+const CYCLES = [
+ { id:'c1', t:'КС-2', d:'13 статусов в двух этапах. Переходы задаёт справочник допустимых переходов.',
+   lanes:[['a','Этап 1 · основной путь'],['b','Этап 1 · возвраты'],['c','Этап 2 · КС-2 и расчёты']], cols:10, cw:150, state:true,
+   nodes:[
+    ['draft','a',1,'state','Черновик подрядчика'],['sent','a',2,'state','Направлено на проверку','заявлено'],['review','a',3,'state','Проверяется ТЗ'],['pre','a',4,'state','Предварительно согласовано'],['accept','a',5,'state','Направлено на приёмку','событие календаря'],['accepted','a',6,'state','Работы приняты','принято = объём'],
+    ['remarks','b',3,'state','Есть замечания'],['rejected','b',5,'state','Не принято','принято = 0'],['partial','b',6,'state','Принято частично','принято ≤ объёма'],
+    ['formed','c',7,'state','КС-2 сформирована','сумма = принято'],['agreed','c',8,'state','КС-2 согласована','→ «согласовано»'],['period','c',9,'state end','Включено в расчётный период'],['paid','c',10,'state miss','Оплачено','из процесса недостижимо']
+   ],
+   links:[['draft','sent','appr','Подрядчик'],['sent','review','appr','ТЗ'],['review','pre','appr','ТЗ'],['review','remarks','appr','ТЗ'],['remarks','sent','action','Подрядчик: повторно'],['pre','accept','action','ТЗ: через событие'],['accept','accepted','appr','ТЗ'],['accept','rejected','appr','ТЗ'],['accept','partial','appr','ТЗ'],['rejected','sent','action','Подрядчик'],['accepted','formed','appr','Подрядчик'],['partial','formed','appr','Подрядчик'],['formed','agreed','appr','ТЗ'],['agreed','period','appr','ТЗ'],['period','paid','miss','нет перехода']] },
+ { id:'c2', t:'Документ (РД, ПД, ИД, отчёты, разрешения)', d:'Статус у каждой редакции; статус документа — статус последней неаннулированной редакции.',
+   lanes:[['a','Основной путь'],['b','Возвраты и замены']], cols:6, cw:170, state:true,
+   nodes:[
+    ['none','a',1,'state','Не загружено','плановая позиция'],['up','a',2,'state','Загружено'],['rev','a',3,'state','На проверке'],['ok','a',4,'state','Согласовано','ИД — «Подписан», разрешение — «Действует»'],['prod','a',5,'state end','Передано в производство','только РД'],
+    ['ret','b',4,'state','Возвращено с замечаниями'],['ann','b',3,'state','Аннулировано','из «Загружено», «На проверке», «Возвращено»'],['sup','b',6,'state auto','Заменено новой редакцией','автоматически']
+   ],
+   links:[['none','up','doc','загрузка'],['up','rev','appr','на проверку'],['rev','ok','appr','согласовать'],['rev','ret','appr','вернуть'],['ret','up','action','новая редакция'],['up','ann','action','аннулировать'],['ok','prod','appr','передать'],['prod','sup','auto','новая ред. согласована']] },
+ { id:'c3', t:'Поручение', d:'Три статуса задаёт пользователь, «Просрочено» вычисляется по сроку.',
+   lanes:[['a','Задаёт пользователь'],['b','Вычисляет система']], cols:4, cw:180, state:true,
+   nodes:[['new','a',1,'state','Новое'],['work','a',2,'state','В работе'],['done','a',3,'state end','Выполнено','дата и комментарий'],['overdue','b',2,'state auto','Просрочено','срок < отчётной даты']],
+   links:[['new','work','action','принять в работу'],['work','done','action','выполнено'],['done','work','action','вернуть в работу'],['work','overdue','auto','срок прошёл'],['overdue','done','action','выполнено']] },
+ { id:'c4', t:'Риск и проблемный вопрос', d:'Статус выбирается вручную без маршрута. Влияние на расчёты включает только «Реализуется».',
+   lanes:[['a','Статус (свободный выбор)'],['b','Что меняется в расчётах']], cols:4, cw:190, state:true,
+   nodes:[['o','a',1,'state','Открыт'],['k','a',2,'state','Под контролем'],['r','a',3,'state','Реализуется'],['z','a',4,'state end','Закрыт'],
+     ['o2','b',1,'calc','Стоимость → «оценка открытых рисков»','только справочно'],['r2','b',3,'calc','+дни к работе, стоимость к статье','сдвиг ввода и прогноза бюджета'],['z2','b',4,'data','Выпадает из матрицы и счётчиков']],
+   links:[['o','k','data'],['k','r','data'],['r','z','data'],['o','o2','calc'],['r','r2','calc'],['z','z2','data']] },
+ { id:'c5', t:'Работа графика', d:'Состояние определяется фактом, статус на Ганте — расчётом.',
+   lanes:[['a','Состояние по факту'],['b','Статус на Ганте']], cols:3, cw:230, state:true,
+   nodes:[['w','a',1,'state','Не начата'],['a1','a',2,'state','В работе','есть факт начала'],['d','a',3,'state end','Завершена','100 % и факт окончания'],
+     ['w2','b',1,'calc','Не начато · Не начато в срок · Сдвиг +N'],['a2','b',2,'calc','В работе · Отставание · Просрочено'],['d2','b',3,'calc','Завершено · Завершено +N дн.']],
+   links:[['w','a1','action','факт начала'],['a1','d','action','100 % и окончание'],['w','w2','calc'],['a1','a2','calc'],['d','d2','calc']] },
+ { id:'c6', t:'Объект', d:'Статус объекта выбирается в настройках; запись объекта проходит свой путь.',
+   lanes:[['a','Статус (свободный выбор)'],['b','Запись объекта'],['c','Удаление']], cols:4, cw:190, state:true,
+   nodes:[['p','a',1,'state','Подготовка'],['s','a',2,'state','Строительство'],['h','a',3,'state','Приостановлен'],['f','a',4,'state end','Завершён'],
+     ['c','b',1,'state','Создан в интерфейсе','или демо-объект'],['ar','b',2,'state','В архиве','скрыт из портфеля'],['rs','b',3,'state','Восстановлен'],['dl','c',2,'state end','Удалён','только созданные в интерфейсе; файлы остаются']],
+   links:[['p','s','data'],['s','h','data'],['h','f','data'],['c','ar','action','Администратор'],['ar','rs','action','без подтверждения'],['c','dl','action','Администратор']] }
+];
+
+/* ===================== МАТРИЦА ===================== */
+const MXA = { cfg:'Настройка', plan:'График', fin:'Бюджет и КС-2', docs:'Документы', mng:'Календарь и поручения', day:'Данные с площадки', adm:'Администрирование' };
+const MX = [
+ ['cfg','Мастер «Добавить объект»','«Создать объект» после проверки','Портфель, меню, все разделы','Модель собирается; объект в портфеле; черновик мастера очищается','Все · Портфель','Да: только Администратор','action'],
+ ['cfg','Настройки → Разделы','Включение или отключение раздела','Меню объекта','Раздел скрывается, данные сохраняются','Все · меню объекта','Нет','data'],
+ ['cfg','Участник объекта','Добавление участника с ролью','Паспорт, документы, письма, приёмка, ресурсы','Заказчик, ТЗ, ГП и проектировщик подставляются по умолчанию','Все','Нет','data'],
+ ['cfg','Договор','Сохранение договора','Справочник организаций, участники','Подрядчик добавляется в участники объекта','Все · Настройки → Участники','Нет','auto'],
+ ['cfg','Правила готовности','Смена режима, веса','Готовность, кривая, обзор, портфель','Пересчёт готовности; без весов — «не рассчитывается»','Руководитель · Обзор, Портфель','Нет','calc'],
+ ['cfg','Любая вкладка настроек','Сохранение','Модель объекта','Пробная сборка; новая ошибка или цикл связей — отказ','Автор изменения','Да: исправить данные','auto'],
+ ['plan','Работа графика','Изменение плановых дат или связей','Гант, вехи, календарь, план освоения','Прогноз, сдвиги, статусы, критический путь, «Требует внимания»','Руководитель · Обзор, Гант','Нет','calc'],
+ ['plan','Факт по работе','«Внести факт»','Работа, этап, готовность, договор, освоение, календарь','Прогноз окончания, критический путь, статус работы, «выполнено» и «не предъявлено» по договору','Руководитель · Обзор; подрядчик · договор','Нет (подтверждения нет)','calc'],
+ ['plan','Веха','Директивный срок или факт','Прогноз ввода, календарь','Прогноз позже директивного → пункт «Требует внимания»','Руководитель · Обзор','Нет','mgmt'],
+ ['plan','Расчёт графика','Сдвиг работы критического пути > 3 дн.','«Требует внимания»','Пункт появляется (до двух работ) или исчезает','Руководитель · Обзор','Нет','mgmt'],
+ ['fin','Статья бюджета','Изменение лимита или резерва','Утверждённый бюджет, прогноз','Пересчёт резерва и статуса бюджета','Руководитель · Обзор, Портфель','Нет','calc'],
+ ['fin','Доп. соглашение','Добавление','Сумма договора, прогноз, строки КС-2','Цена договора меняется, история сохраняется','Все · договор','Нет','calc'],
+ ['fin','Выполнено по договору','Рост факта работ','«Не предъявлено», кнопка «Новая заявка КС-2»','Кнопка доступна, если не предъявлено больше 0,5 млн и нет заявки в работе','Подрядчик · договор','Да: подать заявку','calc'],
+ ['fin','Заявка КС-2','Направить на проверку','Статус КС-2, «КС-2 в работе» в бюджете','«Заявлено» в договоре и статье','ТЗ · бюджет, документы → КС','Да: проверка ТЗ','appr'],
+ ['fin','Заявка КС-2','Предварительно согласовать или замечания','Статус и история КС-2','При замечаниях — возврат подрядчику','Подрядчик и ТЗ · карточка КС-2','Да: следующий шаг','appr'],
+ ['fin','Заявка КС-2','«Назначить приёмку»','Календарь, КС-2','После сохранения события статус «Направлено на приёмку»; приглашение — по кнопке','Участники приёмки · календарь','Да: провести приёмку','action'],
+ ['fin','Заявка КС-2','Результат приёмки','«Принято» в договоре и статье','Непринятая часть возвращается в «не предъявлено»','Подрядчик · договор','Да: сформировать КС-2','appr'],
+ ['fin','КС-2','Сформировать → согласовать → в расчётный период','Договор, статья, структура бюджета на обзоре','«Согласовано» растёт, остаток по договору уменьшается','Руководитель · Бюджет, Обзор','Да: на каждом шаге','appr'],
+ ['fin','Платёж (ввод финансов)','«Внести оплату»','Договор, статья, показатель «Бюджет»','«Оплачено» = сумма платежей','Руководитель · Бюджет, Обзор','Нет','data'],
+ ['fin','Акт (ввод финансов)','«Внести КС-2»','Договор, статья','Учитывается сразу со своим статусом, без согласования','Все · договор','Нет','data'],
+ ['fin','Риск','Статус «Реализуется» с влиянием','Расчёт графика, прогноз стоимости','Сдвиг работы и ввода; стоимость в прогноз статьи','Руководитель · Обзор, Риски','Нет','calc'],
+ ['fin','Прогноз стоимости','Превышение бюджета или резерв > 50 %','«Требует внимания», статус бюджета, портфель','Пункт внимания, цвет показателя','Руководитель · Обзор, Портфель','Нет','mgmt'],
+ ['docs','Документ РД / ПД / ИД','Загрузка редакции с файлом','Документы, карточка работы','Статус «Загружено»; предлагается номер следующей редакции','Все · Документы','Да: направить на проверку','doc'],
+ ['docs','Редакция документа','На проверку → согласовать или вернуть','Статус, история','После согласования новой редакции прежняя — «Заменено»','ТЗ и проектировщик · Документы','Да: ТЗ','appr'],
+ ['docs','РД','Передать в производство','Календарь, карточка работы','Событие «Выдача РД» создаётся автоматически','Подрядчик (получатель — текст) · Календарь','Нет','auto'],
+ ['docs','ИД (АОСР, АООК)','Загрузка','Календарь, ИД по работам, карточка КС-2','Событие освидетельствования','ТЗ · Календарь, ИД','Нет','auto'],
+ ['docs','Работа завершена без РД в производстве','Проверка модели','«Проверка данных»','Предупреждение','Все · Проверка данных','Нет','auto'],
+ ['docs','Плановая позиция','Создание в структуре документации','Документы','Позиция «Не загружено»; контрольный срок — в карточке','Все · Документы','Да: загрузить','data'],
+ ['docs','Ежемесячный отчёт ТЗ','Наступление нового месяца','Документы → Отчёты','Запись «Выпущен» без файла и содержания','Все · Документы','Нет','auto'],
+ ['mng','Событие','Создание: совещание, приёмка, поставка…','Календарь; связанные работы и документы','—','Все · Календарь, карточка работы','Нет','action'],
+ ['mng','Событие','«Подготовить приглашение / письмо» → сохранить','Письма','Текст собран из события, работ, документов, КС-2','Все · Документы → Письма','Да: передать вне системы','action'],
+ ['mng','Протокол (исходные данные)','Поручение по протоколу','Поручения, протокол','Номер «протокол/№»','Ответственный · Поручения','Да: исполнить','action'],
+ ['mng','Поручение','Создание','Календарь, работы, документы','Событие срока в календаре','Ответственный · Поручения, Календарь','Да: исполнить','auto'],
+ ['mng','Поручение','Срок прошёл','«Требует внимания», бейдж меню','Статус «Просрочено»','Руководитель · Обзор','Да: исполнитель','mgmt'],
+ ['mng','Поручение','«Назначить контроль»','Календарь','Совещание связано с поручением','Все · Календарь','Нет','action'],
+ ['mng','Поручение','Выполнено','Обзор, календарь','Пункт снимается из «Требует внимания»','Руководитель · Обзор','Нет','auto'],
+ ['day','Ресурсы','Ввод недели','Ресурсы, обзор, панель Ганта, портфель','Текущая численность = последняя неделя; подрядчики и техника — только последняя неделя','Руководитель · Обзор, Портфель','Нет','mgmt'],
+ ['day','Показатель','Ввод значений за дату','Раздел «Показатели»','Накопительно, отклонение от плана','Только раздел «Показатели»','Нет','calc'],
+ ['day','Фото','Загрузка','Фотохроника, обзор, карточка работы, риск','Проверка даты относительно начала работы','Руководитель · Обзор','Нет','doc'],
+ ['day','Риск','Создание или изменение','Матрица, реестр, бейдж меню, портфель','Уровень по баллу вероятность × влияние','Руководитель · Риски, Портфель','Нет','data'],
+ ['adm','Роль доступа','Сменить роль','Все экраны','Кнопки без прав скрываются','Текущий пользователь','Нет','data'],
+ ['adm','Конфигурация','Импорт файла','Все объекты','Реестр заменяется целиком, без подтверждения','Администратор','Нет','data']
+];
+
+/* ===================== УТИЛИТЫ ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const NS = 'http://www.w3.org/2000/svg';
+const mk = (tag, attrs, parent) => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (parent) parent.appendChild(el); return el; };
+const swatch = (t, w) => `<svg width="${w || 30}" height="10" aria-hidden="true"><line x1="1" y1="5" x2="${(w || 30) - 6}" y2="5" stroke="${TCOL(t)}" stroke-width="${WID[t]}" ${DASH[t] ? `stroke-dasharray="${DASH[t]}"` : ''} stroke-linecap="${t === 'calc' ? 'round' : 'butt'}"/><path d="M${(w || 30) - 7},1 L${(w || 30) - 1},5 L${(w || 30) - 7},9 z" fill="${t === 'miss' ? 'none' : TCOL(t)}" stroke="${t === 'miss' ? TCOL(t) : 'none'}"/></svg>`;
+const gapsOf = id => G.filter(g => g.cat !== 'closed' && g.nodes.includes(id));
+
+/* ===================== СТАТИСТИКА ===================== */
+$('#stats').innerHTML = [
+  [N.length - 1, 'сущностей и расчётов'],
+  [E.filter(e => e.t !== 'miss').length, 'реализованных связей'],
+  [E.filter(e => e.t === 'miss').length, 'возможных недостающих'],
+  [G.filter(g => g.cat !== 'closed').length, 'спорных мест']
+].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
+
+/* ===================== ОБЩАЯ КАРТА ===================== */
+const svg = $('#web');
+const state = { types:new Set(Object.keys(TYPES)), sel:null, labels:false };
+(function buildWeb(){
+  const defs = mk('defs', {}, svg);
+  Object.keys(TYPES).forEach(t => {
+    const m = mk('marker', { id:'m-' + t, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth: t === 'mgmt' ? 6 : 7.5, markerHeight: t === 'mgmt' ? 6 : 7.5, orient:'auto-start-reverse', markerUnits:'userSpaceOnUse' }, defs);
+    if (t === 'miss') mk('circle', { cx:'5', cy:'5', r:'3.6', class:'mk-miss' }, m);
+    else mk('path', { d:'M0,0 L10,5 L0,10 z', class:'mk-' + t }, m);
+  });
+  const gR = mk('g', {}, svg), gS = mk('g', {}, svg), gE = mk('g', {}, svg), gN = mk('g', {}, svg), gL = mk('g', {}, svg);
+  REGIONS.forEach(r => {
+    const g = mk('g', { class:'rg' }, gR);
+    mk('rect', { x:r.x, y:r.y, width:r.w, height:r.h, rx:16 }, g);
+    const tt = mk('text', { x:r.x + 16, y:r.y + 26, class:'rt' }, g); tt.textContent = r.t;
+    const ts = mk('text', { x:r.x + 22 + tt.getComputedTextLength(), y:r.y + 25 }, g); ts.textContent = '· ' + r.s;
+  });
+  REGIONS.forEach(r => {
+    const h = NB.hub, cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    const ty = cy < h.y ? r.y + r.h : r.y, tx = Math.max(r.x + 30, Math.min(r.x + r.w - 30, h.x + (cx - h.x) * 0.55));
+    const sy = cy < h.y ? h.y - h.h / 2 : h.y + h.h / 2;
+    mk('path', { class:'spoke', d:`M${h.x + (cx - h.x) * 0.25},${sy} L${tx},${ty}` }, gS);
+  });
+  /* стороны и распределение концов связей */
+  function side(a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const nx = Math.abs(dx) / ((a.w + b.w) / 2), ny = Math.abs(dy) / ((a.h + b.h) / 2);
+    if (nx > ny * 0.9) return dx > 0 ? 'r' : 'l';
+    return dy > 0 ? 'b' : 't';
+  }
+  const ends = {};
+  E.forEach(e => {
+    const a = NB[e.a], b = NB[e.b];
+    e.sa = side(a, b); e.sb = side(b, a);
+    if (Math.abs(a.y - b.y) < 20 && Math.abs(a.x - b.x) > 300 && a.id !== 'hub' && b.id !== 'hub') { e.sa = e.sb = a.y < 300 ? 't' : 'b'; e.arc = true; }
+    (ends[e.a + e.sa] = ends[e.a + e.sa] || []).push({ e, end:'a', o:b });
+    (ends[e.b + e.sb] = ends[e.b + e.sb] || []).push({ e, end:'b', o:a });
+  });
+  Object.keys(ends).forEach(k => {
+    const list = ends[k], s = k.slice(-1), horiz = s === 't' || s === 'b';
+    list.sort((p, q) => horiz ? p.o.x - q.o.x : p.o.y - q.o.y);
+    list.forEach((it, i) => { it.e['f' + it.end] = list.length === 1 ? 0.5 : 0.18 + 0.64 * i / (list.length - 1); });
+  });
+  function pt(n, s, f) {
+    if (s === 'r') return [n.x + n.w / 2, n.y - n.h / 2 + n.h * f];
+    if (s === 'l') return [n.x - n.w / 2, n.y - n.h / 2 + n.h * f];
+    if (s === 't') return [n.x - n.w / 2 + n.w * f, n.y - n.h / 2];
+    return [n.x - n.w / 2 + n.w * f, n.y + n.h / 2];
+  }
+  const V = { r:[1, 0], l:[-1, 0], t:[0, -1], b:[0, 1] };
+  E.forEach(e => {
+    const a = NB[e.a], b = NB[e.b];
+    const [x1, y1] = pt(a, e.sa, e.fa), [x2, y2] = pt(b, e.sb, e.fb);
+    const dist = Math.hypot(x2 - x1, y2 - y1), k = e.arc ? (NB[e.a].y < 300 ? 70 : 62) + (dist > 900 ? 10 : 0) : Math.max(36, Math.min(220, dist * 0.42));
+    const va = V[e.sa], vb = V[e.sb];
+    const d = `M${x1},${y1} C${x1 + va[0] * k},${y1 + va[1] * k} ${x2 + vb[0] * k},${y2 + vb[1] * k} ${x2},${y2}`;
+    const p = mk('path', { d, class:'e t-' + e.t, 'marker-end':'url(#m-' + e.t + ')', 'data-id':e.id }, gE);
+    const tl = mk('title', {}, p); tl.textContent = NB[e.a].t.replace('\n', ' ') + ' → ' + NB[e.b].t.replace('\n', ' ') + ': ' + e.l + ' (' + TYPES[e.t].n + ')';
+    e.el = p;
+  });
+  N.forEach(n => {
+    const g = mk('g', { class:'nd k-' + n.k, tabindex:'0', role:'button', 'aria-label':n.t.replace('\n', ' '), 'data-id':n.id }, gN);
+    mk('rect', { class:'b', x:n.x - n.w / 2, y:n.y - n.h / 2, width:n.w, height:n.h, rx: n.k === 'hub' ? 16 : 9 }, g);
+    const lines = n.t.split('\n');
+    const tagH = n.tags.length ? 13 : 0, lh = n.k === 'hub' ? 20 : 15.5;
+    const top = n.y - (lines.length * lh + tagH) / 2 + lh * 0.78;
+    lines.forEach((ln, i) => { const t = mk('text', { class:'t', x:n.x, y:top + i * lh, 'text-anchor':'middle' }, g); t.textContent = ln; });
+    if (n.tags.length) {
+      const tg = mk('text', { class:'tg', x:n.x, y:top + lines.length * lh + 2, 'text-anchor':'middle' }, g);
+      n.tags.forEach((t, i) => { const s = mk('tspan', { fill: TAGC[t] ? TCOL(TAGC[t]) : 'var(--ink-3)' }, tg); s.textContent = (i ? '  ' : '') + t.toUpperCase(); });
+    }
+    const gc = gapsOf(n.id).length;
+    if (gc && n.k !== 'hub') {
+      mk('circle', { class:'gd', cx:n.x + n.w / 2 - 2, cy:n.y - n.h / 2 + 2, r:9 }, g);
+      const t = mk('text', { class:'gdt', x:n.x + n.w / 2 - 2, y:n.y - n.h / 2 + 5.5, 'text-anchor':'middle' }, g); t.textContent = gc;
+    }
+    n.el = g;
+    g.addEventListener('click', ev => { ev.stopPropagation(); select(n.id); });
+    g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(n.id); } });
+  });
+  svg.addEventListener('click', () => select(null));
+  state.gL = gL;
+})();
+
+function drawLabels(list) {
+  const gL = state.gL; gL.innerHTML = '';
+  list.forEach(e => {
+    if (e.el.style.display === 'none') return;
+    const L = e.el.getTotalLength(), p = e.el.getPointAtLength(L * 0.5);
+    const g = mk('g', { class:'elab' }, gL);
+    const a = NB[e.a], b = NB[e.b], short = L < 110, horiz = Math.abs(a.y - b.y) < 20;
+    const y = short && horiz ? Math.min(a.y, b.y) - a.h / 2 - 12 : short ? p.y + 4 : p.y + 4;
+    const x = short && !horiz ? p.x + 8 : p.x;
+    const t = mk('text', { x, y, 'text-anchor': short && !horiz ? 'start' : 'middle' }, g); t.textContent = e.l;
+    const bb = t.getBBox();
+    const r = mk('rect', { x:bb.x - 5, y:bb.y - 2, width:bb.width + 10, height:bb.height + 4, rx:5 }, g);
+    r.style.stroke = TCOL(e.t);
+    g.insertBefore(r, t);
+  });
+}
+function applyFilter() {
+  E.forEach(e => { e.el.style.display = state.types.has(e.t) ? '' : 'none'; });
+  document.querySelectorAll('.lg').forEach(b => b.setAttribute('aria-pressed', state.types.has(b.dataset.t)));
+  $('#b-miss').setAttribute('aria-pressed', state.types.size === 1 && state.types.has('miss'));
+  refresh();
+}
+function refresh() {
+  const s = state.sel;
+  svg.classList.toggle('focus', !!s);
+  N.forEach(n => n.el.classList.remove('on', 'sel'));
+  E.forEach(e => e.el.classList.remove('on'));
+  if (s) {
+    const conn = E.filter(e => (e.a === s || e.b === s) && state.types.has(e.t));
+    conn.forEach(e => { e.el.classList.add('on'); NB[e.a].el.classList.add('on'); NB[e.b].el.classList.add('on'); });
+    NB[s].el.classList.add('on', 'sel');
+    drawLabels(conn);
+  } else drawLabels(state.labels ? E.filter(e => state.types.has(e.t)) : []);
+  renderPanel();
+}
+function select(id) { state.sel = id; refresh(); }
+window.__flowSelect = select;
+
+function edgeItem(e, dir) {
+  const o = NB[dir === 'in' ? e.a : e.b];
+  return `<li><i style="background:${TCOL(e.t)}"></i><span><button type="button" data-node="${o.id}">${esc(o.t.replace('\n', ' '))}</button> <span class="lb">— ${esc(e.l)}</span></span></li>`;
+}
+function renderPanel() {
+  const p = $('#panel');
+  if (!state.sel) {
+    p.innerHTML = `<div class="eyebrow">Как читать карту</div><h3>Выберите узел</h3>
+      <dl>
+        <div><dt>Центр</dt><dd>«Строительный проект» — описание объекта, из которого вместе с журналом действий собирается единая модель. Все экраны читают её, ни один не хранит свою копию.</dd></div>
+        <div><dt>Контуры</dt><dd>Настройка, план и выполнение, деньги, данные с площадки, управление, документы. Сверху — то, что видит руководитель.</dd></div>
+        <div><dt>Самое плотное место</dt><dd>«Факт выполнения»: от него зависят прогноз, готовность, выполнение по договорам, объём КС-2 и освоение.</dd></div>
+        <div><dt>Красные пунктирные связи</dt><dd>Их в системе нет. Это вопросы, а не решения.</dd></div>
+      </dl><p class="hint">Совет: кнопка «Только недостающие связи» показывает все места, где данные уже есть, но не используются.</p>`;
+  } else {
+    const n = NB[state.sel];
+    const ins = E.filter(e => e.b === n.id && state.types.has(e.t)), outs = E.filter(e => e.a === n.id && state.types.has(e.t));
+    const real = a => a.filter(e => e.t !== 'miss'), miss = a => a.filter(e => e.t === 'miss');
+    const gaps = G.filter(g => g.nodes.includes(n.id));
+    const qs = Q.map((q, i) => [q, i]).filter(([q]) => q[2].includes(n.id));
+    p.innerHTML = `<div class="eyebrow">Узел карты</div><h3>${esc(n.t.replace('\n', ' '))}</h3>
+      <div class="tags">${n.tags.map(t => `<span class="tag" style="color:${TAGC[t] ? TCOL(TAGC[t]) : 'var(--ink-3)'}">${esc(t)}</span>`).join('')}</div>
+      <dl>
+        <div><dt>Что это</dt><dd>${esc(n.what)}</dd></div>
+        <div><dt>Кто вносит или меняет</dt><dd>${esc(n.who)}</dd></div>
+        <div><dt>Где на экране</dt><dd>${esc(n.where)}</dd></div>
+        <div><dt>Где хранится</dt><dd>${esc(n.store)}</dd></div>
+        ${real(ins).length ? `<div><dt>Получает от · ${real(ins).length}</dt><dd><ul class="plist">${real(ins).map(e => edgeItem(e, 'in')).join('')}</ul></dd></div>` : ''}
+        ${real(outs).length ? `<div><dt>Передаёт в · ${real(outs).length}</dt><dd><ul class="plist">${real(outs).map(e => edgeItem(e, 'out')).join('')}</ul></dd></div>` : ''}
+        ${miss(ins).concat(miss(outs)).length ? `<div><dt>Возможные недостающие связи</dt><dd><ul class="plist">${miss(ins).map(e => edgeItem(e, 'in')).concat(miss(outs).map(e => edgeItem(e, 'out'))).join('')}</ul></dd></div>` : ''}
+        ${gaps.length ? `<div><dt>Разрывы и замкнутые связи</dt><dd>${gaps.map(g => `<div class="gapmini"><span class="dot" style="background:var(--gcol)" ></span><span class="${GCAT[g.cat].c}" style="color:var(--gcol); font-weight:600">${esc(GCAT[g.cat].n)}:</span> <b>${esc(g.t)}</b></div>`).join('')}</dd></div>` : ''}
+        ${qs.length ? `<div><dt>Вопросы для решения</dt><dd>${qs.map(([q, i]) => `<div class="gapmini"><b>${i + 1}.</b> ${esc(q[0])}</div>`).join('')}</dd></div>` : ''}
+      </dl>`;
+    p.querySelectorAll('.gapmini .dot').forEach(d => { d.style.background = getComputedStyle(d.nextElementSibling).color; });
+  }
+  p.querySelectorAll('[data-node]').forEach(b => b.addEventListener('click', () => select(b.dataset.node)));
+}
+
+/* легенда */
+$('#legend').innerHTML = Object.keys(TYPES).map(t => `<button class="lg" type="button" data-t="${t}" aria-pressed="true" title="${esc(TYPES[t].d)}">${swatch(t)}${esc(TYPES[t].n)} <span class="n">${E.filter(e => e.t === t).length}</span></button>`).join('');
+document.querySelectorAll('.lg').forEach(b => b.addEventListener('click', () => {
+  const t = b.dataset.t;
+  if (state.types.has(t)) state.types.delete(t); else state.types.add(t);
+  applyFilter();
+}));
+$('#b-miss').addEventListener('click', () => {
+  const only = state.types.size === 1 && state.types.has('miss');
+  state.types = only ? new Set(Object.keys(TYPES)) : new Set(['miss']);
+  applyFilter();
+});
+$('#b-labels').addEventListener('click', e => { state.labels = !state.labels; e.currentTarget.setAttribute('aria-pressed', state.labels); refresh(); });
+$('#b-reset').addEventListener('click', () => { state.types = new Set(Object.keys(TYPES)); state.labels = false; $('#b-labels').setAttribute('aria-pressed', 'false'); state.sel = null; applyFilter(); });
+
+/* ===================== КОНСТРУКЦИЯ ===================== */
+$('#tree').innerHTML = TREE.map(([t, r, d, subs, nodes]) => `<div class="tc"><div class="route">${esc(r)}</div><h3>${esc(t)}</h3><p>${esc(d)}</p>
+  <div class="chips">${subs.map(s => `<span class="chip">${esc(s)}</span>`).join('')}</div>
+  <div class="chips">${nodes.map(id => `<button class="chip go" type="button" data-go="${id}">↗ ${esc(NB[id].t.replace('\n', ' '))}</button>`).join('')}</div></div>`).join('');
+$('#stores').innerHTML = STORES.map(([t, s, list, reset]) => `<div class="store"><h3>${esc(t)} <span class="faint" style="font-size:12.5px; font-weight:500">${esc(s)}</span></h3><ul>${list.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div class="reset">${esc(reset)}</div></div>`).join('');
+document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { select(b.dataset.go); document.getElementById('map').scrollIntoView(); }));
+
+/* ===================== ДОРОЖКИ ===================== */
+function flowHtml(F) {
+  const lanes = F.lanes, li = Object.fromEntries(lanes.map((l, i) => [l[0], i])), off = F.groups ? 1 : 0;
+  const cols = `150px repeat(${F.cols}, ${F.cw || 165}px)`;
+  let h = `<div class="flow" id="fl-${F.id}" style="grid-template-columns:${cols}">`;
+  if (F.groups) F.groups.forEach(([a, b, t]) => { h += `<div class="grp" style="grid-row:1; grid-column:${a + 1} / ${b + 2}">${esc(t)}</div>`; });
+  lanes.forEach((l, i) => {
+    h += `<div class="lane${i % 2 ? ' alt' : ''}" style="grid-row:${i + 1 + off}"></div><div class="ll" style="grid-row:${i + 1 + off}">${esc(l[1])}</div>`;
+  });
+  F.nodes.forEach(([id, lane, col, kind, text, sub]) => {
+    const st = kind.startsWith('state');
+    const cls = st ? 'k-state ' + kind.split(' ').slice(1).join(' ') : 'k-' + kind;
+    h += `<div class="fn ${cls}" data-fid="${id}" style="grid-row:${li[lane] + 1 + off}; grid-column:${col + 1}">${st ? '' : `<span class="k">${KL[kind] || ''}</span>`}${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
+  });
+  h += `<svg class="fl" aria-hidden="true"></svg><svg class="fl fl-top" aria-hidden="true"></svg></div>`;
+  return h;
+}
+function drawFlow(F) {
+  const box = document.getElementById('fl-' + F.id); if (!box) return;
+  const sv = box.querySelector('svg.fl'), top = box.querySelector('svg.fl-top');
+  [sv, top].forEach(z => { z.setAttribute('width', box.scrollWidth); z.setAttribute('height', box.scrollHeight); z.innerHTML = ''; });
+  const defs = mk('defs', {}, sv);
+  Object.keys(TYPES).forEach(t => {
+    const m = mk('marker', { id:'fm-' + F.id + '-' + t, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse', markerUnits:'userSpaceOnUse' }, defs);
+    if (t === 'miss') mk('circle', { cx:'5', cy:'5', r:'3.6', class:'mk-miss' }, m); else mk('path', { d:'M0,0 L10,5 L0,10 z', class:'mk-' + t }, m);
+  });
+  const B = box.getBoundingClientRect();
+  const R = id => { const el = box.querySelector(`[data-fid="${id}"]`); const r = el.getBoundingClientRect(); return { x:r.left - B.left, y:r.top - B.top, w:r.width, h:r.height, cx:r.left - B.left + r.width / 2, cy:r.top - B.top + r.height / 2 }; };
+  const nodeOf = id => F.nodes.find(n => n[0] === id);
+  const li = Object.fromEntries(F.lanes.map((l, i) => [l[0], i]));
+  const pairCount = {};
+  const placed = [];
+  F.links.forEach(([a, b, t, lab]) => {
+    const A = R(a), Bn = R(b), na = nodeOf(a), nb = nodeOf(b);
+    const laneA = li[na[1]], laneB = li[nb[1]];
+    let d, lx, ly, anchor = 'middle', above = false;
+    if (nb[2] > na[2]) {
+      const dy = Bn.cy - A.cy, x1 = A.x + A.w, y1 = A.cy + (dy > 4 ? Math.min(A.h / 2 - 8, 10) : dy < -4 ? -Math.min(A.h / 2 - 8, 10) : 0);
+      const x2 = Bn.x, y2 = Bn.cy, c = Math.max(26, (x2 - x1) * 0.5);
+      d = `M${x1},${y1} C${x1 + c},${y1} ${x2 - c},${y2} ${x2},${y2}`;
+      if (Math.abs(dy) < 6) { lx = (x1 + x2) / 2; ly = Math.min(A.y, Bn.y) - 6; above = true; } else { lx = (x1 + x2) / 2; ly = (y1 + y2) / 2 + 4; }
+    } else if (nb[2] === na[2]) {
+      const down = Bn.cy > A.cy, back = F.links.some(z => z[0] === b && z[1] === a);
+      const xo = back ? (down ? -14 : 14) : 0;
+      const xa = A.cx + xo, y1 = down ? A.y + A.h : A.y, y2 = down ? Bn.y : Bn.y + Bn.h;
+      d = `M${xa},${y1} L${xa},${y2}`;
+      lx = xa + (xo < 0 ? -6 : 6); ly = (y1 + y2) / 2 + 4; anchor = xo < 0 ? 'end' : 'start';
+    } else {
+      if (laneB < laneA) {
+        const x1 = A.x, y1 = A.cy, x2 = Bn.cx, y2 = Bn.y + Bn.h;
+        d = `M${x1},${y1} C${x1 - 40},${y1} ${x2},${y2 + 50} ${x2},${y2}`; lx = (x1 + x2) / 2; ly = (y1 + y2) / 2 + 8;
+      } else if (laneB > laneA) {
+        const x1 = A.x, y1 = A.cy, x2 = Bn.cx, y2 = Bn.y;
+        d = `M${x1},${y1} C${x1 - 40},${y1} ${x2},${y2 - 50} ${x2},${y2}`; lx = (x1 + x2) / 2; ly = (y1 + y2) / 2;
+      } else if (laneA === 0) {
+        const x1 = A.cx, y1 = A.y, x2 = Bn.cx, y2 = Bn.y, hi = Math.min(y1, y2) - 26;
+        d = `M${x1},${y1} C${x1},${hi} ${x2},${hi} ${x2},${y2}`; lx = (x1 + x2) / 2; ly = hi + 3; above = true;
+      } else {
+        const x1 = A.cx, y1 = A.y + A.h, x2 = Bn.cx, y2 = Bn.y + Bn.h, low = Math.max(y1, y2) + 30;
+        d = `M${x1},${y1} C${x1},${low} ${x2},${low} ${x2},${y2}`; lx = (x1 + x2) / 2; ly = low - 3;
+      }
+    }
+    const p = mk('path', { d, stroke:TCOL(t), 'stroke-width':WID[t], 'marker-end':`url(#fm-${F.id}-${t})` }, sv);
+    if (DASH[t]) p.setAttribute('stroke-dasharray', DASH[t]);
+    if (t === 'calc') p.setAttribute('stroke-linecap', 'round');
+    if (t === 'mgmt') p.setAttribute('opacity', '.7');
+    if (lab) {
+      if (!above && anchor === 'middle') { const L = p.getTotalLength(), q = p.getPointAtLength(L * 0.5); lx = q.x; ly = q.y + 4; }
+      const tx = mk('text', { x:lx, y:ly, class:'lt', 'text-anchor':anchor }, top); tx.textContent = lab;
+      let bb = tx.getBBox();
+      for (let i = 0; i < 4 && placed.some(o => bb.x < o.x + o.width + 4 && o.x < bb.x + bb.width + 4 && bb.y < o.y + o.height + 2 && o.y < bb.y + bb.height + 2); i++) {
+        ly += above ? -(bb.height + 3) : bb.height + 3; tx.setAttribute('y', ly); bb = tx.getBBox();
+      }
+      placed.push(bb);
+      const r = mk('rect', { x:bb.x - 4, y:bb.y - 1, width:bb.width + 8, height:bb.height + 2, rx:4, class:'lr' }, top); top.insertBefore(r, tx);
+    }
+  });
+}
+function flowCard(F, extra) {
+  return `<article class="flowcard"><header><h3>${esc(F.t)}</h3><p>${esc(F.d)}</p></header><div class="fscroll">${flowHtml(F)}</div>${F.foot ? `<div class="foot">${F.foot.map(f => `<div>${f}</div>`).join('')}</div>` : ''}${extra || ''}</article>`;
+}
+$('#flowlist').innerHTML = FLOWS.map(F => flowCard(F)).join('');
+$('#rolesflow').innerHTML = flowCard(ROLEFLOW);
+$('#cyclelist').innerHTML = CYCLES.map(F => flowCard(F)).join('');
+const ALLF = FLOWS.concat([ROLEFLOW], CYCLES);
+function drawAll() { ALLF.forEach(drawFlow); }
+
+/* ===================== РОЛИ ===================== */
+const PERMS = ['Просмотр','Внесение данных','Документы','График','Бюджет','Настройки объекта','Создание объектов','Администрирование'];
+const ROLES = [['Администратор системы',[1,1,1,1,1,1,1,1]],['Руководитель проекта',[1,1,1,1,1,1,0,0]],['Инженер (внесение данных)',[1,1,1,0,0,0,0,0]],['Наблюдатель',[1,0,0,0,0,0,0,0]]];
+$('#permtab').innerHTML = `<thead><tr><th>Право</th>${ROLES.map(r => `<th class="c">${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${PERMS.map((p, i) => `<tr><td>${esc(p)}</td>${ROLES.map(r => `<td class="c">${r[1][i] ? '<span class="yes" aria-label="да">●</span>' : '<span class="no" aria-label="нет">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody>`;
+const PARTY = [
+  ['Заказчик','Реквизит паспорта; подпись писем-черновиков; участник события приёмки'],
+  ['Технический заказчик','Автор ежемесячных отчётов; ответственный и участник приёмки; метка «ТЗ» на шагах КС-2 и документов'],
+  ['Генеральный подрядчик','Получатель РД по умолчанию, если у работы нет договора; список для ввода численности'],
+  ['Подрядчик','Добавляется из договора; метка автора заявки КС-2; получатель РД; список для ввода численности'],
+  ['Проектировщик','Организация РД и ПД по умолчанию'],
+  ['Поставщик','Список для ввода численности'],
+  ['Стройконтроль, другой','Только список участников']
+];
+$('#partytab').innerHTML = `<thead><tr><th>Участник</th><th>Где используется</th></tr></thead><tbody>${PARTY.map(([a, b]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</tbody>`;
+
+/* ===================== МАТРИЦА ===================== */
+let mxArea = 'all';
+function renderMx() {
+  $('#mxf').innerHTML = [['all','Все контуры', MX.length]].concat(Object.keys(MXA).map(k => [k, MXA[k], MX.filter(r => r[0] === k).length])).map(([k, t, n]) => `<button class="btn" type="button" data-mx="${k}" aria-pressed="${mxArea === k}">${esc(t)} <span class="faint mono">${n}</span></button>`).join('');
+  const rows = MX.filter(r => mxArea === 'all' || r[0] === mxArea);
+  $('#mx').innerHTML = `<thead><tr><th>Источник</th><th>Действие / событие</th><th>Куда передаются данные</th><th>Что меняется автоматически</th><th>Кто видит результат</th><th>Требуется ли действие</th></tr></thead><tbody>${rows.map(r => `<tr><td><span class="ty" style="background:${TCOL(r[7])}" title="${esc(TYPES[r[7]].n)}"></span>${esc(r[1])}<div class="faint" style="font-weight:400; font-size:11.5px; margin-top:2px">${esc(MXA[r[0]])}</div></td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[5])}</td><td><span class="need ${/^Да/.test(r[6]) ? 'y' : 'n'}">${esc(r[6])}</span></td></tr>`).join('')}</tbody>`;
+  document.querySelectorAll('[data-mx]').forEach(b => b.addEventListener('click', () => { mxArea = b.dataset.mx; renderMx(); }));
+}
+renderMx();
+
+/* ===================== РАЗРЫВЫ И ВОПРОСЫ ===================== */
+$('#gaplist').innerHTML = Object.keys(GCAT).map(c => {
+  const list = G.filter(g => g.cat === c);
+  return `<article class="gc ${GCAT[c].c}"><header><h3><span class="dot"></span>${esc(GCAT[c].n)}</h3><span class="cnt">${list.length}</span></header><p>${esc(GCAT[c].d)}</p><ol>${list.map(g => `<li><div><b>${esc(g.t)}</b><span>${esc(g.d)}</span><div class="where">${g.nodes.map(id => `<button class="chip go" type="button" data-go2="${id}">↗ ${esc(NB[id].t.replace('\n', ' '))}</button>`).join('')}</div></div></li>`).join('')}</ol></article>`;
+}).join('');
+$('#qlist').innerHTML = Q.map(q => `<li><div>${esc(q[0])}<small>${esc(q[1])}</small></div></li>`).join('');
+document.querySelectorAll('[data-go2]').forEach(b => b.addEventListener('click', () => { select(b.dataset.go2); document.getElementById('map').scrollIntoView(); }));
+
+renderPanel();
+const go = () => requestAnimationFrame(drawAll);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+go();
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 120); });
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener && window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', go);
+})();
+</script>
